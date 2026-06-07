@@ -105,11 +105,6 @@
           <span id="transcriptText"></span>
         </div>
 
-        <!-- Placeholder notice -->
-        <p id="placeholderNote" class="text-slate-400 text-xs text-center mb-5 max-w-xs leading-relaxed">
-          🔑 Replace <code class="bg-white/10 px-1 rounded">AQ.Ab8RN6LKkol4b_yY5RSIlud5xs7HSJR5dXViMEiTsO7JQY4h1g</code> and <code class="bg-white/10 px-1 rounded">YOUR_AGENT_ID</code> below to go live.
-        </p>
-
         <!-- Talk button -->
         <button
           id="talkBtn"
@@ -205,8 +200,6 @@
             : 'flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none';
           const controls = document.getElementById('sessionControls');
           active ? controls.classList.remove('hidden') : controls.classList.add('hidden');
-          const note = document.getElementById('placeholderNote');
-          active ? note.classList.add('hidden') : note.classList.remove('hidden');
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -217,7 +210,6 @@
           if (isSessionActive) { endSession(); return; }
 
           if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
-            showTranscript('⚠️ Demo mode – add your Gemini API key to go live!');
             simulateDemoSession();
             return;
           }
@@ -345,17 +337,57 @@
           setSessionActive(true);
           setStatus('listening');
           const lines = [
-            "Hi there! I'm your AI receptionist. How can I help today?",
-            "We help businesses capture 100% of inbound calls with AI. Want to see a demo?",
-            "Great! I can book you in for a free 15-minute walkthrough. What's your name?"
+            "Hi there! I'm your AI receptionist for ThinkEzly. How can I help you today?",
+            "We help businesses capture 100% of inbound calls with AI employees that work around the clock.",
+            "I can book you in for a free 15-minute walkthrough. Would you like to schedule one?"
           ];
           let i = 0;
-          const interval = setInterval(() => {
-            if (i >= lines.length || !isSessionActive) { clearInterval(interval); return; }
+
+          function speakLine() {
+            if (i >= lines.length || !isSessionActive) {
+              setStatus('ready');
+              hideTranscript();
+              setSessionActive(false);
+              return;
+            }
+            const line = lines[i++];
+            showTranscript(line);
             setStatus('speaking');
-            showTranscript(lines[i++]);
-            setTimeout(() => { if (isSessionActive) setStatus('listening'); }, 2000);
-          }, 3000);
+
+            if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+              const utter = new SpeechSynthesisUtterance(line);
+              utter.rate  = 1.0;
+              utter.pitch = 1.05;
+              const voices = window.speechSynthesis.getVoices();
+              const preferred = voices.find(v =>
+                /samantha|google us english|zira|karen/i.test(v.name)
+              ) || voices.find(v => v.lang === 'en-US') || voices[0];
+              if (preferred) utter.voice = preferred;
+
+              utter.onend = () => {
+                if (!isSessionActive) return;
+                setStatus('listening');
+                setTimeout(speakLine, 1500);
+              };
+              utter.onerror = () => {
+                setStatus('listening');
+                setTimeout(speakLine, 1500);
+              };
+              window.speechSynthesis.speak(utter);
+            } else {
+              setTimeout(() => {
+                setStatus('listening');
+                setTimeout(speakLine, 1500);
+              }, 3000);
+            }
+          }
+
+          if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = () => { setTimeout(speakLine, 500); };
+          } else {
+            setTimeout(speakLine, 500);
+          }
         }
       </script>
     </div>
