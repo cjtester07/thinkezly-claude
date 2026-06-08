@@ -79,315 +79,299 @@
         </div>
       </div>
 
-      <!-- ── Gemini Live Voice Agent ── -->
-      <div class="absolute inset-0 w-full h-full pt-16 flex flex-col items-center justify-center px-6 pb-6">
+      <!-- ── AI Voice Agent ── -->
+      <div class="absolute inset-0 w-full h-full pt-16 flex flex-col items-center justify-center px-6 pb-4">
 
-        <!-- Waveform / Avatar Ring -->
-        <div id="voiceRing" class="relative flex items-center justify-center mb-6">
-          <!-- Outer pulse rings (animate when speaking) -->
-          <div id="pulseRing1" class="absolute w-32 h-32 rounded-full border-2 border-blue-400/30 scale-100 transition-transform duration-700"></div>
-          <div id="pulseRing2" class="absolute w-24 h-24 rounded-full border-2 border-blue-400/40 scale-100 transition-transform duration-700"></div>
-          <!-- Avatar circle -->
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#1071E5] to-[#1d82fc] flex items-center justify-center text-3xl shadow-lg shadow-blue-500/40 z-10">
-            🤖
-          </div>
+        <!-- Avatar Ring -->
+        <div class="relative flex items-center justify-center mb-4">
+          <div id="pulseRing1" class="absolute w-32 h-32 rounded-full border-2 border-blue-400/30 transition-all duration-700"></div>
+          <div id="pulseRing2" class="absolute w-24 h-24 rounded-full border-2 border-blue-400/40 transition-all duration-700"></div>
+          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#1071E5] to-[#1d82fc] flex items-center justify-center text-3xl shadow-lg shadow-blue-500/40 z-10">🤖</div>
         </div>
 
-        <!-- Agent name + status -->
-        <p class="text-white font-black text-lg tracking-wide mb-1">Gemini Voice Agent</p>
-        <div id="agentStatus" class="flex items-center gap-1.5 mb-6">
+        <!-- Name + Status -->
+        <p class="text-white font-black text-lg tracking-wide mb-1">ThinkEzly AI Agent</p>
+        <div class="flex items-center gap-1.5 mb-4">
           <span id="statusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
           <span id="statusText" class="text-slate-400 text-xs font-semibold uppercase tracking-widest">Ready</span>
         </div>
 
-        <!-- Transcript bubble -->
-        <div id="transcriptBubble" class="w-full max-w-sm min-h-[52px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 text-white text-sm font-medium text-center leading-snug mb-6 hidden">
-          <span id="transcriptText"></span>
+        <!-- Agent transcript bubble -->
+        <div id="agentBubble" class="w-full max-w-sm bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-2.5 text-white text-sm font-medium text-center leading-snug mb-2 hidden min-h-[44px]">
+          <span id="agentText"></span>
         </div>
 
-        <!-- Talk button -->
-        <button
-          id="talkBtn"
-          onclick="toggleVoiceSession()"
-          class="flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none"
-        >
+        <!-- User transcript bubble -->
+        <div id="userBubble" class="w-full max-w-sm bg-[#1071E5]/30 border border-blue-400/30 rounded-2xl px-4 py-2 text-blue-100 text-xs text-center leading-snug mb-3 hidden">
+          <span id="userText"></span>
+        </div>
+
+        <!-- Text input (shown while listening) -->
+        <div id="textInputRow" class="hidden w-full max-w-sm flex items-center gap-2 mb-3">
+          <input id="voiceTextInput" type="text" placeholder="Or type your reply…"
+            class="flex-1 bg-white/10 border border-white/20 text-white placeholder-slate-400 text-sm rounded-full px-4 py-2 focus:outline-none focus:border-blue-400"
+            onkeydown="if(event.key==='Enter') submitTextInput()" />
+          <button onclick="submitTextInput()"
+            class="bg-[#1071E5] hover:bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">➔</button>
+        </div>
+
+        <!-- Start button -->
+        <button id="talkBtn" onclick="toggleVoiceSession()"
+          class="flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none">
           <span id="talkIcon">🎙️</span>
           <span id="talkLabel">Talk to Our AI</span>
         </button>
 
-        <!-- Mute / End controls (hidden until session starts) -->
-        <div id="sessionControls" class="hidden flex items-center gap-3 mt-4">
-          <button onclick="toggleMute()" id="muteBtn"
-            class="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2 rounded-full border border-white/20 transition">
-            🔇 Mute
-          </button>
-          <button onclick="endSession()"
-            class="bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full transition">
-            ✕ End Call
-          </button>
-        </div>
+        <!-- End call (shown during session) -->
+        <button id="endBtn" onclick="endSession()"
+          class="hidden mt-3 bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold px-5 py-2 rounded-full transition">
+          ✕ End Call
+        </button>
 
       </div>
-      <!-- ── /Gemini Live Voice Agent ── -->
+      <!-- ── /AI Voice Agent ── -->
 
       <script>
-        // ─────────────────────────────────────────────────────────────────
-        //  GEMINI LIVE API – CONFIGURATION PLACEHOLDERS
-        //  Replace the values below with your real credentials.
-        //  Docs: https://ai.google.dev/gemini-api/docs/live
-        // ─────────────────────────────────────────────────────────────────
-        const GEMINI_API_KEY  = 'YOUR_GEMINI_API_KEY';   // ← replace
-        const GEMINI_MODEL    = 'gemini-2.0-flash-live'; // ← or your preferred live model
-        const AGENT_SYSTEM_PROMPT = `You are a friendly AI receptionist for ThinkEzly, 
-          a service that provides 24/7 AI employees for businesses. 
-          Greet callers warmly, qualify their interest, and encourage them to book a demo.`;
-
-        // ─────────────────────────────────────────────────────────────────
-        //  STATE
-        // ─────────────────────────────────────────────────────────────────
-        let geminiSession   = null;
-        let audioContext    = null;
-        let mediaStream     = null;
-        let micProcessor    = null;
-        let isMuted         = false;
+        // ── STATE ──────────────────────────────────────────────────────
         let isSessionActive = false;
+        let recognition     = null;
+        let isSpeaking      = false;
+        let conversationHistory = [];
 
-        // ─────────────────────────────────────────────────────────────────
-        //  UI HELPERS
-        // ─────────────────────────────────────────────────────────────────
+        const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
+
+        // ── VOICE SELECTION ────────────────────────────────────────────
+        function getBestVoice() {
+          const voices = window.speechSynthesis.getVoices();
+          // Priority list — most natural to least
+          const priority = [
+            v => /samantha/i.test(v.name),
+            v => /karen/i.test(v.name),
+            v => /moira/i.test(v.name),
+            v => /google us english/i.test(v.name),
+            v => /microsoft zira/i.test(v.name),
+            v => /microsoft aria/i.test(v.name),
+            v => v.lang === 'en-US' && !v.name.includes('Google'),
+            v => v.lang === 'en-US',
+            v => v.lang.startsWith('en'),
+          ];
+          for (const test of priority) {
+            const match = voices.find(test);
+            if (match) return match;
+          }
+          return voices[0] || null;
+        }
+
+        // ── UI HELPERS ─────────────────────────────────────────────────
         function setStatus(state) {
-          const dot  = document.getElementById('statusDot');
-          const text = document.getElementById('statusText');
-          const ring1 = document.getElementById('pulseRing1');
-          const ring2 = document.getElementById('pulseRing2');
-
-          const map = {
-            ready:      { color: 'bg-slate-400',   label: 'Ready',        pulse: false },
-            connecting: { color: 'bg-yellow-400',  label: 'Connecting…',  pulse: false },
-            listening:  { color: 'bg-emerald-400', label: 'Listening',    pulse: true  },
-            speaking:   { color: 'bg-blue-400',    label: 'Agent Speaking', pulse: true },
-            error:      { color: 'bg-red-400',     label: 'Error',        pulse: false },
+          const dot   = document.getElementById('statusDot');
+          const label = document.getElementById('statusText');
+          const r1    = document.getElementById('pulseRing1');
+          const r2    = document.getElementById('pulseRing2');
+          const map   = {
+            ready:     { color: 'bg-slate-400',   text: 'Ready',           pulse: false },
+            thinking:  { color: 'bg-yellow-400',  text: 'Thinking…',       pulse: false },
+            speaking:  { color: 'bg-blue-400',    text: 'Agent Speaking',  pulse: true  },
+            listening: { color: 'bg-emerald-400', text: 'Listening…',      pulse: true  },
+            error:     { color: 'bg-red-400',     text: 'Error',           pulse: false },
           };
           const s = map[state] || map.ready;
-          dot.className  = `w-2 h-2 rounded-full ${s.color}`;
-          text.textContent = s.label;
-
+          dot.className = `w-2 h-2 rounded-full ${s.color}`;
+          label.textContent = s.text;
           if (s.pulse) {
-            ring1.classList.add('scale-125', 'opacity-60');
-            ring2.classList.add('scale-110', 'opacity-80');
+            r1.classList.add('scale-125','opacity-60');
+            r2.classList.add('scale-110','opacity-80');
           } else {
-            ring1.classList.remove('scale-125', 'opacity-60');
-            ring2.classList.remove('scale-110', 'opacity-80');
+            r1.classList.remove('scale-125','opacity-60');
+            r2.classList.remove('scale-110','opacity-80');
           }
         }
 
-        function showTranscript(msg) {
-          const bubble = document.getElementById('transcriptBubble');
-          document.getElementById('transcriptText').textContent = msg;
-          bubble.classList.remove('hidden');
+        function showAgent(text) {
+          document.getElementById('agentText').textContent = text;
+          document.getElementById('agentBubble').classList.remove('hidden');
         }
 
-        function hideTranscript() {
-          document.getElementById('transcriptBubble').classList.add('hidden');
+        function showUser(text) {
+          document.getElementById('userText').textContent = 'You: ' + text;
+          document.getElementById('userBubble').classList.remove('hidden');
         }
 
-        function setSessionActive(active) {
+        function showTextInput(show) {
+          document.getElementById('textInputRow').classList.toggle('hidden', !show);
+          if (show) {
+            document.getElementById('voiceTextInput').value = '';
+            document.getElementById('voiceTextInput').focus();
+          }
+        }
+
+        function setSessionUI(active) {
           isSessionActive = active;
-          document.getElementById('talkIcon').textContent  = active ? '⏹️' : '🎙️';
-          document.getElementById('talkLabel').textContent = active ? 'Session Active' : 'Talk to Our AI';
+          document.getElementById('talkIcon').textContent  = active ? '🔴' : '🎙️';
+          document.getElementById('talkLabel').textContent = active ? 'Live' : 'Talk to Our AI';
           document.getElementById('talkBtn').className = active
-            ? 'flex items-center gap-2 bg-slate-600 hover:bg-slate-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg transition-all duration-200 focus:outline-none'
+            ? 'flex items-center gap-2 bg-slate-700 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg transition-all duration-200 focus:outline-none cursor-default'
             : 'flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none';
-          const controls = document.getElementById('sessionControls');
-          active ? controls.classList.remove('hidden') : controls.classList.add('hidden');
+          document.getElementById('endBtn').classList.toggle('hidden', !active);
         }
 
-        // ─────────────────────────────────────────────────────────────────
-        //  GEMINI LIVE SESSION  (WebSocket-based)
-        //  Full integration guide: https://ai.google.dev/gemini-api/docs/live
-        // ─────────────────────────────────────────────────────────────────
-        async function toggleVoiceSession() {
-          if (isSessionActive) { endSession(); return; }
+        // ── SPEAK ──────────────────────────────────────────────────────
+        function speak(text, onDone) {
+          window.speechSynthesis.cancel();
+          isSpeaking = true;
+          setStatus('speaking');
+          showAgent(text);
+          showTextInput(false);
 
-          if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
-            simulateDemoSession();
+          const utter   = new SpeechSynthesisUtterance(text);
+          utter.rate    = 0.92;   // slightly slower = more natural
+          utter.pitch   = 1.0;
+          utter.volume  = 1.0;
+
+          const setVoiceAndSpeak = () => {
+            const voice = getBestVoice();
+            if (voice) utter.voice = voice;
+            utter.onend = () => {
+              isSpeaking = false;
+              if (onDone && isSessionActive) onDone();
+            };
+            utter.onerror = () => {
+              isSpeaking = false;
+              if (onDone && isSessionActive) onDone();
+            };
+            window.speechSynthesis.speak(utter);
+          };
+
+          if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+          } else {
+            setVoiceAndSpeak();
+          }
+        }
+
+        // ── LISTEN (mic) ───────────────────────────────────────────────
+        function startListening() {
+          if (!isSessionActive) return;
+          setStatus('listening');
+          showTextInput(true);
+
+          const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SR) {
+            // No mic API — text input only
             return;
           }
 
-          try {
-            setStatus('connecting');
-            setSessionActive(true);
+          recognition = new SR();
+          recognition.lang           = 'en-US';
+          recognition.interimResults = true;
+          recognition.maxAlternatives = 1;
 
-            // Request mic access
-            mediaStream  = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new AudioContext({ sampleRate: 16000 });
+          let finalTranscript = '';
+          let silenceTimer    = null;
 
-            // ── Open Gemini Live WebSocket ──────────────────────────────
-            const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
-            geminiSession = new WebSocket(wsUrl);
+          recognition.onresult = (e) => {
+            let interim = '';
+            finalTranscript = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+              if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+              else interim += e.results[i][0].transcript;
+            }
+            // Show interim in user bubble
+            showUser((finalTranscript || interim).trim());
 
-            geminiSession.onopen = () => {
-              // Send setup message
-              geminiSession.send(JSON.stringify({
-                setup: {
-                  model: `models/${GEMINI_MODEL}`,
-                  generation_config: { response_modalities: ['AUDIO'] },
-                  system_instruction: { parts: [{ text: AGENT_SYSTEM_PROMPT }] }
-                }
-              }));
-              startMicStream();
-              setStatus('listening');
-            };
-
-            geminiSession.onmessage = async (evt) => {
-              const msg = JSON.parse(evt.data);
-
-              // Handle audio output from Gemini
-              if (msg.serverContent?.modelTurn?.parts) {
-                for (const part of msg.serverContent.modelTurn.parts) {
-                  if (part.inlineData?.mimeType?.startsWith('audio/')) {
-                    setStatus('speaking');
-                    await playAudioChunk(part.inlineData.data);
-                  }
-                  if (part.text) {
-                    showTranscript(part.text);
-                  }
-                }
-              }
-
-              // Turn complete → back to listening
-              if (msg.serverContent?.turnComplete) {
-                setStatus('listening');
-              }
-
-              // Transcription (if enabled)
-              if (msg.serverContent?.inputTranscription?.text) {
-                showTranscript('You: ' + msg.serverContent.inputTranscription.text);
-              }
-            };
-
-            geminiSession.onerror = (e) => { console.error('Gemini WS error', e); setStatus('error'); };
-            geminiSession.onclose = () => { if (isSessionActive) endSession(); };
-
-          } catch (err) {
-            console.error('Voice session error:', err);
-            setStatus('error');
-            showTranscript('Could not start session: ' + err.message);
-            setSessionActive(false);
-          }
-        }
-
-        // Stream mic PCM16 to Gemini
-        function startMicStream() {
-          const source = audioContext.createMediaStreamSource(mediaStream);
-          micProcessor = audioContext.createScriptProcessor(4096, 1, 1);
-          micProcessor.onaudioprocess = (e) => {
-            if (isMuted || !geminiSession || geminiSession.readyState !== WebSocket.OPEN) return;
-            const float32 = e.inputBuffer.getChannelData(0);
-            const pcm16   = float32ToPCM16(float32);
-            const b64     = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-            geminiSession.send(JSON.stringify({
-              realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: b64 }] }
-            }));
+            // Reset silence timer on each result
+            clearTimeout(silenceTimer);
+            if (finalTranscript.trim()) {
+              silenceTimer = setTimeout(() => {
+                recognition.stop();
+              }, 1200); // 1.2s silence after final = done
+            }
           };
-          source.connect(micProcessor);
-          micProcessor.connect(audioContext.destination);
+
+          recognition.onend = () => {
+            clearTimeout(silenceTimer);
+            const said = finalTranscript.trim();
+            if (said && isSessionActive) {
+              showTextInput(false);
+              handleUserInput(said);
+            } else if (isSessionActive) {
+              // Nothing heard — re-listen
+              setTimeout(startListening, 500);
+            }
+          };
+
+          recognition.onerror = (e) => {
+            if (e.error === 'no-speech' && isSessionActive) {
+              setTimeout(startListening, 500);
+            }
+          };
+
+          recognition.start();
         }
 
-        function float32ToPCM16(float32Arr) {
-          const buf = new Int16Array(float32Arr.length);
-          for (let i = 0; i < float32Arr.length; i++) {
-            buf[i] = Math.max(-32768, Math.min(32767, float32Arr[i] * 32768));
+        // ── TEXT INPUT FALLBACK ────────────────────────────────────────
+        function submitTextInput() {
+          const input = document.getElementById('voiceTextInput');
+          const text  = input.value.trim();
+          if (!text) return;
+          if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+          showUser(text);
+          showTextInput(false);
+          handleUserInput(text);
+        }
+
+        // ── AI REPLY via Anthropic API ─────────────────────────────────
+        async function handleUserInput(userText) {
+          if (!isSessionActive) return;
+          setStatus('thinking');
+
+          conversationHistory.push({ role: 'user', content: userText });
+
+          try {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1000,
+                system: SYSTEM_PROMPT,
+                messages: conversationHistory
+              })
+            });
+            const data   = await res.json();
+            const reply  = data.content?.[0]?.text || "I'm sorry, I didn't catch that. Could you repeat?";
+            conversationHistory.push({ role: 'assistant', content: reply });
+            speak(reply, startListening);
+          } catch (err) {
+            speak("I'm having a quick connection issue. Please try again or call us at 833-405-1540.", startListening);
           }
-          return buf;
         }
 
-        async function playAudioChunk(b64) {
-          if (!audioContext) return;
-          const raw   = atob(b64);
-          const bytes = new Uint8Array(raw.length);
-          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-          const buffer = await audioContext.decodeAudioData(bytes.buffer);
-          const src = audioContext.createBufferSource();
-          src.buffer = buffer;
-          src.connect(audioContext.destination);
-          src.start();
+        // ── SESSION CONTROL ────────────────────────────────────────────
+        function toggleVoiceSession() {
+          if (isSessionActive) return; // button disabled during session
+          startSession();
         }
 
-        function toggleMute() {
-          isMuted = !isMuted;
-          document.getElementById('muteBtn').textContent = isMuted ? '🔊 Unmute' : '🔇 Mute';
+        function startSession() {
+          conversationHistory = [];
+          setSessionUI(true);
+          document.getElementById('userBubble').classList.add('hidden');
+
+          const opener = "Hi! I'm Ashley, your AI receptionist. Tell me about your business — what industry are you in?";
+          speak(opener, startListening);
         }
 
         function endSession() {
-          if (geminiSession) { geminiSession.close(); geminiSession = null; }
-          if (micProcessor)  { micProcessor.disconnect(); micProcessor = null; }
-          if (mediaStream)   { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-          if (audioContext)  { audioContext.close(); audioContext = null; }
-          setSessionActive(false);
+          isSessionActive = false;
+          window.speechSynthesis.cancel();
+          if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+          setSessionUI(false);
           setStatus('ready');
-          hideTranscript();
-          isMuted = false;
-        }
-
-        // ─────────────────────────────────────────────────────────────────
-        //  DEMO MODE (no API key) – simulate a quick conversation
-        // ─────────────────────────────────────────────────────────────────
-        function simulateDemoSession() {
-          setSessionActive(true);
-          setStatus('listening');
-          const lines = [
-            "Hi there! I'm your AI receptionist for ThinkEzly. How can I help you today?",
-            "We help businesses capture 100% of inbound calls with AI employees that work around the clock.",
-            "I can book you in for a free 15-minute walkthrough. Would you like to schedule one?"
-          ];
-          let i = 0;
-
-          function speakLine() {
-            if (i >= lines.length || !isSessionActive) {
-              setStatus('ready');
-              hideTranscript();
-              setSessionActive(false);
-              return;
-            }
-            const line = lines[i++];
-            showTranscript(line);
-            setStatus('speaking');
-
-            if ('speechSynthesis' in window) {
-              window.speechSynthesis.cancel();
-              const utter = new SpeechSynthesisUtterance(line);
-              utter.rate  = 1.0;
-              utter.pitch = 1.05;
-              const voices = window.speechSynthesis.getVoices();
-              const preferred = voices.find(v =>
-                /samantha|google us english|zira|karen/i.test(v.name)
-              ) || voices.find(v => v.lang === 'en-US') || voices[0];
-              if (preferred) utter.voice = preferred;
-
-              utter.onend = () => {
-                if (!isSessionActive) return;
-                setStatus('listening');
-                setTimeout(speakLine, 1500);
-              };
-              utter.onerror = () => {
-                setStatus('listening');
-                setTimeout(speakLine, 1500);
-              };
-              window.speechSynthesis.speak(utter);
-            } else {
-              setTimeout(() => {
-                setStatus('listening');
-                setTimeout(speakLine, 1500);
-              }, 3000);
-            }
-          }
-
-          if (window.speechSynthesis.getVoices().length === 0) {
-            window.speechSynthesis.onvoiceschanged = () => { setTimeout(speakLine, 500); };
-          } else {
-            setTimeout(speakLine, 500);
-          }
+          showTextInput(false);
+          document.getElementById('agentBubble').classList.add('hidden');
+          document.getElementById('userBubble').classList.add('hidden');
+          conversationHistory = [];
         }
       </script>
     </div>
