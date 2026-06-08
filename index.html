@@ -80,51 +80,59 @@
       </div>
 
       <!-- ── AI Voice Agent ── -->
-      <div class="absolute inset-0 w-full h-full pt-16 flex flex-col items-center justify-center px-6 pb-4">
+      <div class="absolute inset-0 w-full h-full pt-14 flex flex-col items-center justify-start px-5 pb-3 overflow-hidden">
 
         <!-- Avatar Ring -->
-        <div class="relative flex items-center justify-center mb-4">
-          <div id="pulseRing1" class="absolute w-32 h-32 rounded-full border-2 border-blue-400/30 transition-all duration-700"></div>
-          <div id="pulseRing2" class="absolute w-24 h-24 rounded-full border-2 border-blue-400/40 transition-all duration-700"></div>
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#1071E5] to-[#1d82fc] flex items-center justify-center text-3xl shadow-lg shadow-blue-500/40 z-10">🤖</div>
+        <div class="relative flex items-center justify-center mb-3 flex-shrink-0">
+          <div id="pulseRing1" class="absolute w-28 h-28 rounded-full border-2 border-blue-400/30 transition-all duration-700"></div>
+          <div id="pulseRing2" class="absolute w-20 h-20 rounded-full border-2 border-blue-400/40 transition-all duration-700"></div>
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#1071E5] to-[#1d82fc] flex items-center justify-center text-2xl shadow-lg shadow-blue-500/40 z-10">🤖</div>
         </div>
 
         <!-- Name + Status -->
-        <p class="text-white font-black text-lg tracking-wide mb-1">ThinkEzly AI Agent</p>
-        <div class="flex items-center gap-1.5 mb-4">
+        <p class="text-white font-black text-base tracking-wide mb-1 flex-shrink-0">ThinkEzly AI Agent</p>
+        <div class="flex items-center gap-1.5 mb-2 flex-shrink-0">
           <span id="statusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
           <span id="statusText" class="text-slate-400 text-xs font-semibold uppercase tracking-widest">Ready</span>
         </div>
 
-        <!-- Agent transcript bubble -->
-        <div id="agentBubble" class="w-full max-w-sm bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-2.5 text-white text-sm font-medium text-center leading-snug mb-2 hidden min-h-[44px]">
-          <span id="agentText"></span>
+        <!-- Voice selector (visible before session starts) -->
+        <div id="voiceSelector" class="flex items-center gap-2 mb-3 flex-shrink-0">
+          <span class="text-slate-400 text-xs">Voice:</span>
+          <div class="flex gap-1">
+            <button onclick="selectVoice('Aoede',this)"   class="voice-btn active-voice text-xs px-2.5 py-1 rounded-full border border-blue-400 bg-blue-500/20 text-blue-200 font-bold transition">Aoede</button>
+            <button onclick="selectVoice('Charon',this)"  class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Charon</button>
+            <button onclick="selectVoice('Fenrir',this)"  class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Fenrir</button>
+            <button onclick="selectVoice('Kore',this)"    class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Kore</button>
+            <button onclick="selectVoice('Puck',this)"    class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Puck</button>
+          </div>
         </div>
 
-        <!-- User transcript bubble -->
-        <div id="userBubble" class="w-full max-w-sm bg-[#1071E5]/30 border border-blue-400/30 rounded-2xl px-4 py-2 text-blue-100 text-xs text-center leading-snug mb-3 hidden">
-          <span id="userText"></span>
+        <!-- Scrollable conversation log -->
+        <div id="conversationLog"
+          class="w-full max-w-sm flex-1 overflow-y-auto flex flex-col gap-2 mb-2 px-1"
+          style="min-height:0; max-height: 160px; scroll-behavior: smooth;">
         </div>
 
         <!-- Text input (shown while listening) -->
-        <div id="textInputRow" class="hidden w-full max-w-sm flex items-center gap-2 mb-3">
+        <div id="textInputRow" class="hidden w-full max-w-sm flex items-center gap-2 mb-2 flex-shrink-0">
           <input id="voiceTextInput" type="text" placeholder="Or type your reply…"
-            class="flex-1 bg-white/10 border border-white/20 text-white placeholder-slate-400 text-sm rounded-full px-4 py-2 focus:outline-none focus:border-blue-400"
+            class="flex-1 bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs rounded-full px-3 py-1.5 focus:outline-none focus:border-blue-400"
             onkeydown="if(event.key==='Enter') submitTextInput()" />
           <button onclick="submitTextInput()"
-            class="bg-[#1071E5] hover:bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">➔</button>
+            class="bg-[#1071E5] hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">➔</button>
         </div>
 
         <!-- Start button -->
         <button id="talkBtn" onclick="toggleVoiceSession()"
-          class="flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none">
+          class="flex-shrink-0 flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none">
           <span id="talkIcon">🎙️</span>
           <span id="talkLabel">Talk to Our AI</span>
         </button>
 
-        <!-- End call (shown during session) -->
+        <!-- End call -->
         <button id="endBtn" onclick="endSession()"
-          class="hidden mt-3 bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold px-5 py-2 rounded-full transition">
+          class="hidden flex-shrink-0 mt-2 bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold px-5 py-1.5 rounded-full transition">
           ✕ End Call
         </button>
 
@@ -157,265 +165,97 @@
 
       <script>
         // ═══════════════════════════════════════════════════════════════
-        //  STATE
+        //  CONFIG
         // ═══════════════════════════════════════════════════════════════
-        let isSessionActive     = false;
-        let recognition         = null;
-        let isSpeaking          = false;
-        let conversationHistory = [];
-        let transcriptLog       = [];
-        let sessionStartTime    = null;
-
-        // ── AUDIO INFRASTRUCTURE ───────────────────────────────────────
-        // All audio (mic + TTS) funnels into one AudioContext so we can
-        // record both sides in a single MediaRecorder.
-        let audioCtx          = null;   // shared AudioContext
-        let mixDest           = null;   // MediaStreamAudioDestinationNode (the recorder's source)
-        let micStream         = null;   // raw mic MediaStream
-        let mediaRecorder     = null;
-        let audioChunks       = [];
-        let audioBlob         = null;
+        const GEMINI_MODEL    = 'gemini-2.5-flash-preview-native-audio-dialog';
+        const GEMINI_IN_RATE  = 16000;
+        const GEMINI_OUT_RATE = 24000;
+        let   GEMINI_VOICE    = 'Aoede'; // user-selectable
 
         const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
 
         // ═══════════════════════════════════════════════════════════════
-        //  AUDIO SETUP  — mic + TTS mix → MediaRecorder
+        //  STATE
         // ═══════════════════════════════════════════════════════════════
-        async function initAudio() {
-          // Single AudioContext for the whole session
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          mixDest  = audioCtx.createMediaStreamDestination(); // recorder reads from here
+        let isSessionActive  = false;
+        let ws               = null;
+        let micCtx           = null;
+        let micStream        = null;
+        let micProcessor     = null;
+        let playCtx          = null;
+        let playbackQueue    = Promise.resolve();
+        let nextPlayTime     = 0;
+        let transcriptLog    = [];
+        let agentTextBuffer  = '';
+        let currentAgentEl   = null; // live DOM element being streamed into
 
-          // ── Mic ──────────────────────────────────────────────────────
-          try {
-            micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            const micSource = audioCtx.createMediaStreamSource(micStream);
-            micSource.connect(mixDest);         // mic → mix bus
-            micSource.connect(audioCtx.destination); // mic → speakers (for SpeechRecognition to work)
-          } catch (e) {
-            console.warn('Mic unavailable:', e);
-          }
+        // ── Recording ─────────────────────────────────────────────────
+        let mediaRecorder    = null;
+        let audioChunks      = [];
+        let audioBlob        = null;
+        let recStartTime     = null;
+        let mixDest          = null;
 
-          // ── MediaRecorder on the mix bus ─────────────────────────────
-          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-            ? 'audio/webm;codecs=opus' : 'audio/webm';
-          audioChunks = [];
-          mediaRecorder = new MediaRecorder(mixDest.stream, { mimeType });
-          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-          mediaRecorder.onstop = () => {
-            audioBlob = new Blob(audioChunks, { type: mimeType });
-          };
-          mediaRecorder.start(300);
-        }
-
-        // ── TTS via AudioContext (captured in mix) ─────────────────────
-        // Strategy: speak via SpeechSynthesis normally (for voice quality),
-        // AND simultaneously play a silent audio node through the mix so
-        // the recorder stays alive. For the agent voice itself we use the
-        // Web Speech API output — browsers pipe it through the OS audio
-        // stack which we can't tap directly. Instead we re-synthesize a
-        // parallel AudioBuffer using the Web Speech API's audio data trick:
-        // we render TTS to an <audio> element via a data URL produced by
-        // speechSynthesis, then route THAT through AudioContext → mix.
-        //
-        // Browser support note: The only cross-browser way to capture TTS
-        // audio is to use an AudioContext + OscillatorNode as a "heartbeat"
-        // to keep the recorder stream alive, and rely on the fact that
-        // Chrome/Edge route speechSynthesis through the same audio output
-        // as AudioContext when both share the same AudioContext destination.
-        // We connect a GainNode at 0 gain so the heartbeat is silent but
-        // the recorder stream never goes empty.
-
-        let ttsGainNode    = null;  // gain=1 while agent speaks, 0 otherwise
-        let heartbeat      = null;  // silent oscillator keeps stream alive
-
-        function startHeartbeat() {
-          if (!audioCtx || heartbeat) return;
-          heartbeat = audioCtx.createOscillator();
-          const g   = audioCtx.createGain();
-          g.gain.setValueAtTime(0, audioCtx.currentTime); // completely silent
-          heartbeat.connect(g);
-          g.connect(mixDest);
-          g.connect(audioCtx.destination);
-          heartbeat.start();
-        }
-
-        // Speak TTS and route audio through AudioContext for capture
-        function speakWithCapture(text, onDone) {
-          window.speechSynthesis.cancel();
-          isSpeaking = true;
-          setStatus('speaking');
-          showAgent(text);
-          showTextInput(false);
-          transcriptLog.push({ speaker: 'Ashley (Agent)', text, time: getLineTimestamp() });
-
-          const utter  = new SpeechSynthesisUtterance(text);
-          utter.rate   = 0.92;
-          utter.pitch  = 1.0;
-          utter.volume = 1.0;
-
-          const go = () => {
-            const voice = getBestVoice();
-            if (voice) utter.voice = voice;
-
-            // Route TTS through AudioContext by creating a MediaElementSource
-            // from a hidden <audio> element that echoes speechSynthesis output.
-            // Chrome pipes SpeechSynthesis to the default audio device;
-            // we use a parallel AudioContext.destination connection so the
-            // recorder captures it via the shared context.
-            // 
-            // Concrete approach that works in Chrome/Edge/Firefox:
-            // 1. Use speechSynthesis normally (user hears natural voice)
-            // 2. In parallel, use AudioContext.createBuffer + decodeAudioData
-            //    to replay TTS audio through the mix bus.
-            // Since we can't get a buffer from speechSynthesis directly,
-            // we use the SpeechSynthesis Recorder trick: convert text → audio
-            // via a fetch to a TTS endpoint, or use the AudioWorklet approach.
-            //
-            // Practical fallback: capture system audio via getDisplayMedia
-            // with audio:true (screen share audio). This works in Chrome
-            // when the user allows "Share tab audio". We prompt for this once.
-
-            utter.onend = () => {
-              isSpeaking = false;
-              if (onDone && isSessionActive) onDone();
-            };
-            utter.onerror = () => {
-              isSpeaking = false;
-              if (onDone && isSessionActive) onDone();
-            };
-            window.speechSynthesis.speak(utter);
-          };
-
-          if (window.speechSynthesis.getVoices().length === 0) {
-            window.speechSynthesis.onvoiceschanged = go;
-          } else {
-            go();
-          }
-        }
+        // ── Reconnect ─────────────────────────────────────────────────
+        let reconnectTimer   = null;
+        let reconnectCount   = 0;
+        const MAX_RECONNECTS = 5;
 
         // ═══════════════════════════════════════════════════════════════
-        //  TAB AUDIO CAPTURE  (captures TTS + mic together in Chrome)
-        //  User grants "Share this tab" with "Also share tab audio" checked.
-        //  This is the only browser-native way to capture speechSynthesis.
+        //  VOICE SELECTOR
         // ═══════════════════════════════════════════════════════════════
-        let tabStream     = null;
-        let tabCaptured   = false;
-
-        async function requestTabAudioCapture() {
-          if (tabCaptured) return true;
-          try {
-            // This opens the screen-share picker — user must pick "Chrome Tab"
-            // and check "Share tab audio"
-            tabStream = await navigator.mediaDevices.getDisplayMedia({
-              video: false,          // video: false may not be supported everywhere
-              audio: {
-                suppressLocalAudioPlayback: false,
-                echoCancellation: false,
-                noiseSuppression: false,
-                sampleRate: 44100
-              }
-            });
-            // Route tab audio into the mix bus
-            const tabSource = audioCtx.createMediaStreamSource(tabStream);
-            tabSource.connect(mixDest);
-            tabCaptured = true;
-            return true;
-          } catch (e) {
-            console.warn('Tab audio capture declined or unavailable:', e);
-            return false;
-          }
-        }
-
-        function stopTabCapture() {
-          if (tabStream) { tabStream.getTracks().forEach(t => t.stop()); tabStream = null; }
-          tabCaptured = false;
+        function selectVoice(name, btn) {
+          GEMINI_VOICE = name;
+          document.querySelectorAll('.voice-btn').forEach(b => {
+            b.className = 'voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200';
+          });
+          btn.className = 'voice-btn active-voice text-xs px-2.5 py-1 rounded-full border border-blue-400 bg-blue-500/20 text-blue-200 font-bold transition';
         }
 
         // ═══════════════════════════════════════════════════════════════
         //  EST TIMESTAMPS
         // ═══════════════════════════════════════════════════════════════
         function getESTFilestamp() {
-          const now = new Date();
-          const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-          const pad = n => String(n).padStart(2, '0');
-          return `${est.getFullYear()}-${pad(est.getMonth()+1)}-${pad(est.getDate())}_${pad(est.getHours())}-${pad(est.getMinutes())}-${pad(est.getSeconds())}-EST`;
+          const est = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+          const p   = n => String(n).padStart(2, '0');
+          return est.getFullYear() + '-' + p(est.getMonth()+1) + '-' + p(est.getDate()) +
+                 '_' + p(est.getHours()) + '-' + p(est.getMinutes()) + '-' + p(est.getSeconds()) + '-EST';
         }
-
         function getESTReadable() {
           return new Date().toLocaleString('en-US', {
             timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'medium'
           }) + ' EST';
         }
-
         function getLineTimestamp() {
           return new Date().toLocaleString('en-US', {
-            timeZone: 'America/New_York',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
+            timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit'
           });
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  EXPORT
+        //  CONVERSATION LOG  (scrollable chat-style UI)
         // ═══════════════════════════════════════════════════════════════
-        function downloadTranscript() {
-          const stamp = getESTFilestamp();
-          const lines = [
-            'ThinkEzly AI Agent — Conversation Transcript',
-            '=============================================',
-            `Date: ${getESTReadable()}`,
-            '',
-            ...transcriptLog.map(e => `[${e.time}]  ${e.speaker}: ${e.text}`),
-            '',
-            `--- End of conversation (${transcriptLog.length} exchanges) ---`
-          ].join('\n');
-          const blob = new Blob([lines], { type: 'text/plain' });
-          const url  = URL.createObjectURL(blob);
-          const a    = Object.assign(document.createElement('a'), { href: url, download: `thinkezly-conversation-${stamp}.txt` });
-          a.click(); URL.revokeObjectURL(url);
+        function appendBubble(role, text, streaming) {
+          const log  = document.getElementById('conversationLog');
+          const isAgent = role === 'agent';
+          const div  = document.createElement('div');
+          div.className = isAgent
+            ? 'flex justify-start'
+            : 'flex justify-end';
+          const bubble = document.createElement('div');
+          bubble.className = isAgent
+            ? 'max-w-[85%] bg-white/10 border border-white/15 text-white text-xs leading-snug px-3 py-2 rounded-2xl rounded-tl-sm'
+            : 'max-w-[85%] bg-[#1071E5]/50 border border-blue-400/30 text-blue-100 text-xs leading-snug px-3 py-2 rounded-2xl rounded-tr-sm';
+          bubble.textContent = text;
+          div.appendChild(bubble);
+          log.appendChild(div);
+          scrollLog();
+          return bubble; // return so we can stream into it
         }
 
-        function downloadAudio() {
-          if (!audioBlob) { alert('No audio recording available for this session.'); return; }
-          const stamp = getESTFilestamp();
-          const url   = URL.createObjectURL(audioBlob);
-          const a     = Object.assign(document.createElement('a'), { href: url, download: `thinkezly-conversation-${stamp}.webm` });
-          a.click(); URL.revokeObjectURL(url);
-        }
-
-        function showExportModal() {
-          const btn = document.getElementById('audioDownloadBtn');
-          btn.disabled     = !audioBlob;
-          btn.style.opacity = audioBlob ? '1' : '0.4';
-          document.getElementById('exportModal').classList.remove('hidden');
-        }
-
-        function dismissExport() {
-          document.getElementById('exportModal').classList.add('hidden');
-          transcriptLog = []; audioBlob = null; audioChunks = [];
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  VOICE SELECTION
-        // ═══════════════════════════════════════════════════════════════
-        function getBestVoice() {
-          const voices   = window.speechSynthesis.getVoices();
-          const priority = [
-            v => /samantha/i.test(v.name),
-            v => /karen/i.test(v.name),
-            v => /moira/i.test(v.name),
-            v => /google us english/i.test(v.name),
-            v => /microsoft aria/i.test(v.name),
-            v => /microsoft zira/i.test(v.name),
-            v => v.lang === 'en-US' && !v.name.includes('Google'),
-            v => v.lang === 'en-US',
-            v => v.lang.startsWith('en'),
-          ];
-          for (const test of priority) {
-            const match = voices.find(test);
-            if (match) return match;
-          }
-          return voices[0] || null;
+        function scrollLog() {
+          const log = document.getElementById('conversationLog');
+          log.scrollTop = log.scrollHeight;
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -427,32 +267,27 @@
           const r1    = document.getElementById('pulseRing1');
           const r2    = document.getElementById('pulseRing2');
           const map   = {
-            ready:     { color: 'bg-slate-400',   text: 'Ready',          pulse: false },
-            thinking:  { color: 'bg-yellow-400',  text: 'Thinking…',      pulse: false },
-            speaking:  { color: 'bg-blue-400',    text: 'Agent Speaking', pulse: true  },
-            listening: { color: 'bg-emerald-400', text: 'Listening…',     pulse: true  },
-            error:     { color: 'bg-red-400',     text: 'Error',          pulse: false },
+            ready:        { color: 'bg-slate-400',   text: 'Ready',           pulse: false },
+            connecting:   { color: 'bg-yellow-400',  text: 'Connecting...',   pulse: false },
+            reconnecting: { color: 'bg-yellow-400',  text: 'Reconnecting...', pulse: false },
+            listening:    { color: 'bg-emerald-400', text: 'Listening...',    pulse: true  },
+            speaking:     { color: 'bg-blue-400',    text: 'Agent Speaking',  pulse: true  },
+            thinking:     { color: 'bg-yellow-400',  text: 'Thinking...',     pulse: false },
+            error:        { color: 'bg-red-400',     text: 'Error',           pulse: false },
           };
           const s = map[state] || map.ready;
-          dot.className     = `w-2 h-2 rounded-full ${s.color}`;
+          dot.className     = 'w-2 h-2 rounded-full ' + s.color;
           label.textContent = s.text;
           r1.classList.toggle('scale-125', s.pulse); r1.classList.toggle('opacity-60', s.pulse);
           r2.classList.toggle('scale-110', s.pulse); r2.classList.toggle('opacity-80', s.pulse);
         }
 
-        function showAgent(text) {
-          document.getElementById('agentText').textContent = text;
-          document.getElementById('agentBubble').classList.remove('hidden');
-        }
-
-        function showUser(text) {
-          document.getElementById('userText').textContent = 'You: ' + text;
-          document.getElementById('userBubble').classList.remove('hidden');
-        }
-
         function showTextInput(show) {
           document.getElementById('textInputRow').classList.toggle('hidden', !show);
-          if (show) { document.getElementById('voiceTextInput').value = ''; document.getElementById('voiceTextInput').focus(); }
+          if (show) {
+            document.getElementById('voiceTextInput').value = '';
+            setTimeout(() => document.getElementById('voiceTextInput').focus(), 100);
+          }
         }
 
         function setSessionUI(active) {
@@ -460,100 +295,318 @@
           document.getElementById('talkIcon').textContent  = active ? '🔴' : '🎙️';
           document.getElementById('talkLabel').textContent = active ? 'Live' : 'Talk to Our AI';
           document.getElementById('talkBtn').className = active
-            ? 'flex items-center gap-2 bg-slate-700 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg transition-all duration-200 focus:outline-none cursor-default'
-            : 'flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-3 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none';
+            ? 'flex-shrink-0 flex items-center gap-2 bg-slate-700 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg transition-all duration-200 focus:outline-none cursor-default'
+            : 'flex-shrink-0 flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none';
           document.getElementById('endBtn').classList.toggle('hidden', !active);
+          // Hide voice selector during session
+          document.getElementById('voiceSelector').classList.toggle('hidden', active);
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  SPEAK
+        //  AUDIO RECORDING SETUP
         // ═══════════════════════════════════════════════════════════════
-        function speak(text, onDone) {
-          speakWithCapture(text, onDone);
+        function initRecording() {
+          playCtx  = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: GEMINI_OUT_RATE });
+          mixDest  = playCtx.createMediaStreamDestination();
+          nextPlayTime = playCtx.currentTime;
+
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus' : 'audio/webm';
+          audioChunks   = [];
+          mediaRecorder = new MediaRecorder(mixDest.stream, { mimeType });
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = async () => {
+            const raw = new Blob(audioChunks, { type: mimeType });
+            audioBlob = await fixWebmDuration(raw, Date.now() - recStartTime);
+          };
+          recStartTime = Date.now();
+          mediaRecorder.start(200);
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  LISTEN
+        //  MIC SETUP
         // ═══════════════════════════════════════════════════════════════
-        function startListening() {
-          if (!isSessionActive) return;
-          setStatus('listening');
-          showTextInput(true);
+        async function initMic() {
+          micStream    = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          micCtx       = new AudioContext({ sampleRate: GEMINI_IN_RATE });
+          const src    = micCtx.createMediaStreamSource(micStream);
+          micProcessor = micCtx.createScriptProcessor(4096, 1, 1);
 
-          const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SR) return;
-
-          recognition = new SR();
-          recognition.lang            = 'en-US';
-          recognition.interimResults  = true;
-          recognition.maxAlternatives = 1;
-
-          let finalTranscript = '';
-          let silenceTimer    = null;
-
-          recognition.onresult = (e) => {
-            let interim = '';
-            finalTranscript = '';
-            for (let i = e.resultIndex; i < e.results.length; i++) {
-              if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
-              else interim += e.results[i][0].transcript;
+          micProcessor.onaudioprocess = (e) => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const f32    = e.inputBuffer.getChannelData(0);
+            const i16    = new Int16Array(f32.length);
+            for (let i = 0; i < f32.length; i++) {
+              i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
             }
-            showUser((finalTranscript || interim).trim());
-            clearTimeout(silenceTimer);
-            if (finalTranscript.trim()) {
-              silenceTimer = setTimeout(() => { recognition.stop(); }, 1200);
+            const bytes  = new Uint8Array(i16.buffer);
+            let binary   = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            ws.send(JSON.stringify({
+              realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=' + GEMINI_IN_RATE, data: btoa(binary) }] }
+            }));
+
+            // Feed mic into mix recorder (resampled to 24kHz)
+            if (playCtx && mixDest) {
+              const resampled = resampleF32(f32, GEMINI_IN_RATE, GEMINI_OUT_RATE);
+              const buf       = playCtx.createBuffer(1, resampled.length, GEMINI_OUT_RATE);
+              buf.copyToChannel(resampled, 0);
+              const s = playCtx.createBufferSource();
+              s.buffer = buf;
+              s.connect(mixDest);
+              s.start();
             }
           };
 
-          recognition.onend = () => {
-            clearTimeout(silenceTimer);
-            const said = finalTranscript.trim();
-            if (said && isSessionActive) { showTextInput(false); handleUserInput(said); }
-            else if (isSessionActive) { setTimeout(startListening, 500); }
-          };
+          src.connect(micProcessor);
+          micProcessor.connect(micCtx.destination);
+        }
 
-          recognition.onerror = (e) => {
-            if (e.error === 'no-speech' && isSessionActive) setTimeout(startListening, 500);
-          };
-
-          recognition.start();
+        function resampleF32(input, fromRate, toRate) {
+          if (fromRate === toRate) return input;
+          const ratio  = toRate / fromRate;
+          const output = new Float32Array(Math.round(input.length * ratio));
+          for (let i = 0; i < output.length; i++) {
+            const pos = i / ratio;
+            const lo  = Math.floor(pos);
+            const hi  = Math.min(lo + 1, input.length - 1);
+            output[i] = input[lo] + (input[hi] - input[lo]) * (pos - lo);
+          }
+          return output;
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  TEXT INPUT FALLBACK
+        //  PCM PLAYBACK  (scheduled for gapless output)
+        // ═══════════════════════════════════════════════════════════════
+        function enqueuePCM(b64data) {
+          if (!playCtx) return;
+          const raw  = atob(b64data);
+          const i16  = new Int16Array(raw.length / 2);
+          for (let i = 0; i < i16.length; i++) {
+            i16[i] = (raw.charCodeAt(i * 2 + 1) << 8) | (raw.charCodeAt(i * 2) & 0xff);
+          }
+          const f32 = new Float32Array(i16.length);
+          for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768.0;
+
+          const buf = playCtx.createBuffer(1, f32.length, GEMINI_OUT_RATE);
+          buf.copyToChannel(f32, 0);
+
+          const src = playCtx.createBufferSource();
+          src.buffer = buf;
+          src.connect(playCtx.destination);
+          src.connect(mixDest);
+
+          // Schedule back-to-back (gapless)
+          const startAt = Math.max(nextPlayTime, playCtx.currentTime + 0.01);
+          src.start(startAt);
+          nextPlayTime = startAt + buf.duration;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  FIX WEBM DURATION
+        // ═══════════════════════════════════════════════════════════════
+        async function fixWebmDuration(blob, durationMs) {
+          try {
+            const buf  = await blob.arrayBuffer();
+            const data = new Uint8Array(buf);
+            for (let i = 0; i < data.length - 9; i++) {
+              if (data[i] === 0x44 && data[i+1] === 0x89 && data[i+2] === 0x88) {
+                new DataView(buf).setFloat64(i + 3, durationMs / 1000, false);
+                return new Blob([buf], { type: blob.type });
+              }
+            }
+            return blob;
+          } catch(e) { return blob; }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  TEXT INPUT
         // ═══════════════════════════════════════════════════════════════
         function submitTextInput() {
           const input = document.getElementById('voiceTextInput');
           const text  = input.value.trim();
-          if (!text) return;
-          if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
-          showUser(text);
+          if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+          input.value = '';
+          appendBubble('user', text);
           showTextInput(false);
-          handleUserInput(text);
+          transcriptLog.push({ speaker: 'Visitor', text, time: getLineTimestamp() });
+          ws.send(JSON.stringify({
+            clientContent: {
+              turns: [{ role: 'user', parts: [{ text }] }],
+              turnComplete: true
+            }
+          }));
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  AI REPLY
+        //  EXPORT
         // ═══════════════════════════════════════════════════════════════
-        async function handleUserInput(userText) {
-          if (!isSessionActive) return;
-          setStatus('thinking');
-          transcriptLog.push({ speaker: 'Visitor', text: userText, time: getLineTimestamp() });
-          conversationHistory.push({ role: 'user', content: userText });
+        function downloadTranscript() {
+          const stamp = getESTFilestamp();
+          const lines = [
+            'ThinkEzly AI Agent — Conversation Transcript',
+            '=============================================',
+            'Date: ' + getESTReadable(),
+            ''
+          ].concat(transcriptLog.map(e => '[' + e.time + ']  ' + e.speaker + ': ' + e.text))
+           .concat(['', '--- End of conversation (' + transcriptLog.length + ' exchanges) ---'])
+           .join('
+');
+          const url = URL.createObjectURL(new Blob([lines], { type: 'text/plain' }));
+          Object.assign(document.createElement('a'), { href: url, download: 'thinkezly-conversation-' + stamp + '.txt' }).click();
+          URL.revokeObjectURL(url);
+        }
 
+        function downloadAudio() {
+          if (!audioBlob) { alert('No audio recording available.'); return; }
+          const stamp = getESTFilestamp();
+          const url   = URL.createObjectURL(audioBlob);
+          Object.assign(document.createElement('a'), { href: url, download: 'thinkezly-conversation-' + stamp + '.webm' }).click();
+          URL.revokeObjectURL(url);
+        }
+
+        function showExportModal() {
+          const btn = document.getElementById('audioDownloadBtn');
+          btn.disabled      = !audioBlob;
+          btn.style.opacity = audioBlob ? '1' : '0.4';
+          document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function dismissExport() {
+          document.getElementById('exportModal').classList.add('hidden');
+          transcriptLog = []; audioBlob = null; audioChunks = [];
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  GEMINI WEBSOCKET
+        // ═══════════════════════════════════════════════════════════════
+        async function startGeminiSession(isReconnect) {
+          setStatus(isReconnect ? 'reconnecting' : 'connecting');
+
+          let apiKey;
           try {
-            const res = await fetch('/.netlify/functions/chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ system: SYSTEM_PROMPT, messages: conversationHistory })
-            });
-            const data  = await res.json();
-            const reply = data.content?.[0]?.text || "I'm sorry, I didn't catch that. Could you repeat?";
-            conversationHistory.push({ role: 'assistant', content: reply });
-            speak(reply, startListening);
-          } catch (err) {
-            speak("I'm having a quick connection issue. Please try again or call us directly.", startListening);
+            const res  = await fetch('/.netlify/functions/gemini-token');
+            const data = await res.json();
+            apiKey = data.key;
+            if (!apiKey) throw new Error('No key');
+          } catch(e) {
+            setStatus('error');
+            appendBubble('agent', 'Could not connect — check that GEMINI_API_KEY is set in Netlify.');
+            setSessionUI(false);
+            return;
           }
+
+          const wsUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + apiKey;
+          ws = new WebSocket(wsUrl);
+
+          ws.onopen = async () => {
+            reconnectCount = 0;
+            ws.send(JSON.stringify({
+              setup: {
+                model: 'models/' + GEMINI_MODEL,
+                generation_config: {
+                  response_modalities: ['AUDIO', 'TEXT'],
+                  speech_config: {
+                    voice_config: { prebuilt_voice_config: { voice_name: GEMINI_VOICE } }
+                  }
+                },
+                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }
+              }
+            }));
+
+            // On reconnect, replay transcript so Gemini has context
+            if (isReconnect && transcriptLog.length > 0) {
+              const history = transcriptLog.map(e => ({
+                role: e.speaker === 'Visitor' ? 'user' : 'model',
+                parts: [{ text: e.text }]
+              }));
+              ws.send(JSON.stringify({
+                clientContent: { turns: history, turnComplete: false }
+              }));
+            }
+
+            if (!isReconnect) {
+              await initMic();
+            }
+            setStatus('listening');
+            showTextInput(true);
+          };
+
+          ws.onmessage = (evt) => {
+            let msg;
+            try { msg = JSON.parse(evt.data); } catch(e) { return; }
+
+            const parts = msg.serverContent?.modelTurn?.parts || [];
+            for (const part of parts) {
+              // Audio
+              if (part.inlineData?.mimeType?.includes('audio/pcm')) {
+                setStatus('speaking');
+                showTextInput(false);
+                enqueuePCM(part.inlineData.data);
+              }
+              // Streaming text → update live bubble
+              if (part.text) {
+                agentTextBuffer += part.text;
+                if (!currentAgentEl) {
+                  currentAgentEl = appendBubble('agent', agentTextBuffer);
+                } else {
+                  currentAgentEl.textContent = agentTextBuffer;
+                  scrollLog();
+                }
+              }
+            }
+
+            // Input transcription (user speech)
+            if (msg.serverContent?.inputTranscription?.text) {
+              const heard = msg.serverContent.inputTranscription.text.trim();
+              if (heard) {
+                appendBubble('user', heard);
+                transcriptLog.push({ speaker: 'Visitor', text: heard, time: getLineTimestamp() });
+              }
+            }
+
+            // Output transcription (agent speech)
+            if (msg.serverContent?.outputTranscription?.text) {
+              const said = msg.serverContent.outputTranscription.text.trim();
+              if (said) transcriptLog.push({ speaker: 'Ashley (Agent)', text: said, time: getLineTimestamp() });
+            }
+
+            // Turn complete
+            if (msg.serverContent?.turnComplete) {
+              if (agentTextBuffer.trim()) {
+                if (!transcriptLog.find(e => e.speaker === 'Ashley (Agent)' && e.text === agentTextBuffer.trim())) {
+                  transcriptLog.push({ speaker: 'Ashley (Agent)', text: agentTextBuffer.trim(), time: getLineTimestamp() });
+                }
+              }
+              agentTextBuffer  = '';
+              currentAgentEl   = null;
+              // Wait for audio to finish then go back to listening
+              const waitUntil = nextPlayTime - (playCtx ? playCtx.currentTime : 0);
+              setTimeout(() => {
+                if (isSessionActive) { setStatus('listening'); showTextInput(true); }
+              }, Math.max(0, waitUntil * 1000) + 200);
+            }
+          };
+
+          ws.onerror = (e) => {
+            console.error('Gemini WS error:', e);
+          };
+
+          ws.onclose = (evt) => {
+            if (!isSessionActive) return;
+            console.warn('WS closed — code:', evt.code, 'reason:', evt.reason);
+            // Auto-reconnect (up to MAX_RECONNECTS times)
+            if (reconnectCount < MAX_RECONNECTS) {
+              reconnectCount++;
+              const delay = Math.min(1000 * reconnectCount, 5000);
+              setStatus('reconnecting');
+              appendBubble('agent', '(Reconnecting… please wait)');
+              reconnectTimer = setTimeout(() => startGeminiSession(true), delay);
+            } else {
+              setStatus('error');
+              appendBubble('agent', 'Connection lost. Please end the call and try again.');
+            }
+          };
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -564,58 +617,41 @@
           startSession();
         }
 
-        async function startSession() {
-          conversationHistory = [];
-          transcriptLog       = [];
-          audioBlob           = null;
-          audioChunks         = [];
-          tabCaptured         = false;
-          sessionStartTime    = new Date();
+        function startSession() {
+          transcriptLog    = [];
+          audioBlob        = null;
+          audioChunks      = [];
+          agentTextBuffer  = '';
+          currentAgentEl   = null;
+          playbackQueue    = Promise.resolve();
+          reconnectCount   = 0;
+
+          // Clear log
+          document.getElementById('conversationLog').innerHTML = '';
 
           setSessionUI(true);
-          document.getElementById('userBubble').classList.add('hidden');
           document.getElementById('exportModal').classList.add('hidden');
 
-          // Init audio context + mic recording
-          await initAudio();
-          startHeartbeat();
-
-          // Prompt for tab audio capture to get agent voice
-          // Show a brief UI note while the picker opens
-          showAgent("One moment — please share your tab audio when prompted to enable full recording.");
-          const captured = await requestTabAudioCapture();
-          if (!captured) {
-            showAgent("Recording mic only — tab audio sharing was skipped.");
-          }
-
-          const opener = "Hi! I'm Ashley, your AI receptionist. Tell me about your business — what industry are you in?";
-          speak(opener, startListening);
+          initRecording();
+          startGeminiSession(false);
         }
 
         function endSession() {
           isSessionActive = false;
-          window.speechSynthesis.cancel();
-          if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+          clearTimeout(reconnectTimer);
 
-          // Stop recorder — onstop handler sets audioBlob
+          if (ws) { try { ws.close(); } catch(e){} ws = null; }
+          if (micProcessor) { micProcessor.disconnect(); micProcessor = null; }
+          if (micStream)    { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+          if (micCtx)       { micCtx.close().catch(()=>{}); micCtx = null; }
           if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-          if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-          stopTabCapture();
-          if (heartbeat)  { try { heartbeat.stop(); } catch(e){} heartbeat = null; }
-          if (audioCtx)   { audioCtx.close(); audioCtx = null; }
+          setTimeout(() => { if (playCtx) { playCtx.close().catch(()=>{}); playCtx = null; } }, 800);
 
           setSessionUI(false);
           setStatus('ready');
           showTextInput(false);
-          document.getElementById('agentBubble').classList.add('hidden');
-          document.getElementById('userBubble').classList.add('hidden');
 
-          // Wait a tick for onstop to fire and set audioBlob, then show modal
-          if (transcriptLog.length > 0) {
-            setTimeout(showExportModal, 600);
-          } else {
-            conversationHistory = [];
-          }
+          if (transcriptLog.length > 0) setTimeout(showExportModal, 1200);
         }
       </script>
     </div>
