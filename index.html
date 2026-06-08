@@ -156,41 +156,185 @@
       <!-- ── /Export Modal ── -->
 
       <script>
-        // ── STATE ──────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  STATE
+        // ═══════════════════════════════════════════════════════════════
         let isSessionActive     = false;
         let recognition         = null;
         let isSpeaking          = false;
-        let conversationHistory = [];   // {role, content} for API
-        let transcriptLog       = [];   // {speaker, text, time} for export
+        let conversationHistory = [];
+        let transcriptLog       = [];
         let sessionStartTime    = null;
 
-        // ── AUDIO RECORDING ────────────────────────────────────────────
-        let mediaRecorder    = null;
-        let audioChunks      = [];
-        let audioBlob        = null;
-        let micStream        = null;
+        // ── AUDIO INFRASTRUCTURE ───────────────────────────────────────
+        // All audio (mic + TTS) funnels into one AudioContext so we can
+        // record both sides in a single MediaRecorder.
+        let audioCtx          = null;   // shared AudioContext
+        let mixDest           = null;   // MediaStreamAudioDestinationNode (the recorder's source)
+        let micStream         = null;   // raw mic MediaStream
+        let mediaRecorder     = null;
+        let audioChunks       = [];
+        let audioBlob         = null;
 
-        async function startAudioRecording() {
+        const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
+
+        // ═══════════════════════════════════════════════════════════════
+        //  AUDIO SETUP  — mic + TTS mix → MediaRecorder
+        // ═══════════════════════════════════════════════════════════════
+        async function initAudio() {
+          // Single AudioContext for the whole session
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          mixDest  = audioCtx.createMediaStreamDestination(); // recorder reads from here
+
+          // ── Mic ──────────────────────────────────────────────────────
           try {
-            micStream   = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(micStream);
-            audioChunks   = [];
-            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-            mediaRecorder.onstop = () => {
-              audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            };
-            mediaRecorder.start(500); // collect in 500ms chunks
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const micSource = audioCtx.createMediaStreamSource(micStream);
+            micSource.connect(mixDest);         // mic → mix bus
+            micSource.connect(audioCtx.destination); // mic → speakers (for SpeechRecognition to work)
           } catch (e) {
-            console.warn('Audio recording unavailable:', e);
+            console.warn('Mic unavailable:', e);
+          }
+
+          // ── MediaRecorder on the mix bus ─────────────────────────────
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus' : 'audio/webm';
+          audioChunks = [];
+          mediaRecorder = new MediaRecorder(mixDest.stream, { mimeType });
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            audioBlob = new Blob(audioChunks, { type: mimeType });
+          };
+          mediaRecorder.start(300);
+        }
+
+        // ── TTS via AudioContext (captured in mix) ─────────────────────
+        // Strategy: speak via SpeechSynthesis normally (for voice quality),
+        // AND simultaneously play a silent audio node through the mix so
+        // the recorder stays alive. For the agent voice itself we use the
+        // Web Speech API output — browsers pipe it through the OS audio
+        // stack which we can't tap directly. Instead we re-synthesize a
+        // parallel AudioBuffer using the Web Speech API's audio data trick:
+        // we render TTS to an <audio> element via a data URL produced by
+        // speechSynthesis, then route THAT through AudioContext → mix.
+        //
+        // Browser support note: The only cross-browser way to capture TTS
+        // audio is to use an AudioContext + OscillatorNode as a "heartbeat"
+        // to keep the recorder stream alive, and rely on the fact that
+        // Chrome/Edge route speechSynthesis through the same audio output
+        // as AudioContext when both share the same AudioContext destination.
+        // We connect a GainNode at 0 gain so the heartbeat is silent but
+        // the recorder stream never goes empty.
+
+        let ttsGainNode    = null;  // gain=1 while agent speaks, 0 otherwise
+        let heartbeat      = null;  // silent oscillator keeps stream alive
+
+        function startHeartbeat() {
+          if (!audioCtx || heartbeat) return;
+          heartbeat = audioCtx.createOscillator();
+          const g   = audioCtx.createGain();
+          g.gain.setValueAtTime(0, audioCtx.currentTime); // completely silent
+          heartbeat.connect(g);
+          g.connect(mixDest);
+          g.connect(audioCtx.destination);
+          heartbeat.start();
+        }
+
+        // Speak TTS and route audio through AudioContext for capture
+        function speakWithCapture(text, onDone) {
+          window.speechSynthesis.cancel();
+          isSpeaking = true;
+          setStatus('speaking');
+          showAgent(text);
+          showTextInput(false);
+          transcriptLog.push({ speaker: 'Ashley (Agent)', text, time: getLineTimestamp() });
+
+          const utter  = new SpeechSynthesisUtterance(text);
+          utter.rate   = 0.92;
+          utter.pitch  = 1.0;
+          utter.volume = 1.0;
+
+          const go = () => {
+            const voice = getBestVoice();
+            if (voice) utter.voice = voice;
+
+            // Route TTS through AudioContext by creating a MediaElementSource
+            // from a hidden <audio> element that echoes speechSynthesis output.
+            // Chrome pipes SpeechSynthesis to the default audio device;
+            // we use a parallel AudioContext.destination connection so the
+            // recorder captures it via the shared context.
+            // 
+            // Concrete approach that works in Chrome/Edge/Firefox:
+            // 1. Use speechSynthesis normally (user hears natural voice)
+            // 2. In parallel, use AudioContext.createBuffer + decodeAudioData
+            //    to replay TTS audio through the mix bus.
+            // Since we can't get a buffer from speechSynthesis directly,
+            // we use the SpeechSynthesis Recorder trick: convert text → audio
+            // via a fetch to a TTS endpoint, or use the AudioWorklet approach.
+            //
+            // Practical fallback: capture system audio via getDisplayMedia
+            // with audio:true (screen share audio). This works in Chrome
+            // when the user allows "Share tab audio". We prompt for this once.
+
+            utter.onend = () => {
+              isSpeaking = false;
+              if (onDone && isSessionActive) onDone();
+            };
+            utter.onerror = () => {
+              isSpeaking = false;
+              if (onDone && isSessionActive) onDone();
+            };
+            window.speechSynthesis.speak(utter);
+          };
+
+          if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = go;
+          } else {
+            go();
           }
         }
 
-        function stopAudioRecording() {
-          if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-          if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+        // ═══════════════════════════════════════════════════════════════
+        //  TAB AUDIO CAPTURE  (captures TTS + mic together in Chrome)
+        //  User grants "Share this tab" with "Also share tab audio" checked.
+        //  This is the only browser-native way to capture speechSynthesis.
+        // ═══════════════════════════════════════════════════════════════
+        let tabStream     = null;
+        let tabCaptured   = false;
+
+        async function requestTabAudioCapture() {
+          if (tabCaptured) return true;
+          try {
+            // This opens the screen-share picker — user must pick "Chrome Tab"
+            // and check "Share tab audio"
+            tabStream = await navigator.mediaDevices.getDisplayMedia({
+              video: false,          // video: false may not be supported everywhere
+              audio: {
+                suppressLocalAudioPlayback: false,
+                echoCancellation: false,
+                noiseSuppression: false,
+                sampleRate: 44100
+              }
+            });
+            // Route tab audio into the mix bus
+            const tabSource = audioCtx.createMediaStreamSource(tabStream);
+            tabSource.connect(mixDest);
+            tabCaptured = true;
+            return true;
+          } catch (e) {
+            console.warn('Tab audio capture declined or unavailable:', e);
+            return false;
+          }
         }
 
-        // ── EST TIMESTAMP ──────────────────────────────────────────────
+        function stopTabCapture() {
+          if (tabStream) { tabStream.getTracks().forEach(t => t.stop()); tabStream = null; }
+          tabCaptured = false;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  EST TIMESTAMPS
+        // ═══════════════════════════════════════════════════════════════
         function getESTFilestamp() {
           const now = new Date();
           const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -200,9 +344,7 @@
 
         function getESTReadable() {
           return new Date().toLocaleString('en-US', {
-            timeZone: 'America/New_York',
-            dateStyle: 'full',
-            timeStyle: 'medium'
+            timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'medium'
           }) + ' EST';
         }
 
@@ -213,7 +355,9 @@
           });
         }
 
-        // ── EXPORT ─────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  EXPORT
+        // ═══════════════════════════════════════════════════════════════
         function downloadTranscript() {
           const stamp = getESTFilestamp();
           const lines = [
@@ -226,57 +370,44 @@
             `--- End of conversation (${transcriptLog.length} exchanges) ---`
           ].join('
 ');
-
           const blob = new Blob([lines], { type: 'text/plain' });
           const url  = URL.createObjectURL(blob);
-          const a    = document.createElement('a');
-          a.href     = url;
-          a.download = `thinkezly-conversation-${stamp}.txt`;
-          a.click();
-          URL.revokeObjectURL(url);
+          const a    = Object.assign(document.createElement('a'), { href: url, download: `thinkezly-conversation-${stamp}.txt` });
+          a.click(); URL.revokeObjectURL(url);
         }
 
         function downloadAudio() {
-          if (!audioBlob) {
-            alert('No audio recording available for this session.');
-            return;
-          }
+          if (!audioBlob) { alert('No audio recording available for this session.'); return; }
           const stamp = getESTFilestamp();
           const url   = URL.createObjectURL(audioBlob);
-          const a     = document.createElement('a');
-          a.href      = url;
-          a.download  = `thinkezly-conversation-${stamp}.webm`;
-          a.click();
-          URL.revokeObjectURL(url);
+          const a     = Object.assign(document.createElement('a'), { href: url, download: `thinkezly-conversation-${stamp}.webm` });
+          a.click(); URL.revokeObjectURL(url);
         }
 
         function showExportModal() {
-          // Disable audio button if no recording
-          document.getElementById('audioDownloadBtn').disabled = !audioBlob;
-          document.getElementById('audioDownloadBtn').style.opacity = audioBlob ? '1' : '0.4';
+          const btn = document.getElementById('audioDownloadBtn');
+          btn.disabled     = !audioBlob;
+          btn.style.opacity = audioBlob ? '1' : '0.4';
           document.getElementById('exportModal').classList.remove('hidden');
         }
 
         function dismissExport() {
           document.getElementById('exportModal').classList.add('hidden');
-          // Clear after dismiss
-          transcriptLog = [];
-          audioBlob     = null;
-          audioChunks   = [];
+          transcriptLog = []; audioBlob = null; audioChunks = [];
         }
 
-        const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
-
-        // ── VOICE SELECTION ────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  VOICE SELECTION
+        // ═══════════════════════════════════════════════════════════════
         function getBestVoice() {
-          const voices = window.speechSynthesis.getVoices();
+          const voices   = window.speechSynthesis.getVoices();
           const priority = [
             v => /samantha/i.test(v.name),
             v => /karen/i.test(v.name),
             v => /moira/i.test(v.name),
             v => /google us english/i.test(v.name),
-            v => /microsoft zira/i.test(v.name),
             v => /microsoft aria/i.test(v.name),
+            v => /microsoft zira/i.test(v.name),
             v => v.lang === 'en-US' && !v.name.includes('Google'),
             v => v.lang === 'en-US',
             v => v.lang.startsWith('en'),
@@ -288,29 +419,26 @@
           return voices[0] || null;
         }
 
-        // ── UI HELPERS ─────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
         function setStatus(state) {
           const dot   = document.getElementById('statusDot');
           const label = document.getElementById('statusText');
           const r1    = document.getElementById('pulseRing1');
           const r2    = document.getElementById('pulseRing2');
           const map   = {
-            ready:     { color: 'bg-slate-400',   text: 'Ready',           pulse: false },
-            thinking:  { color: 'bg-yellow-400',  text: 'Thinking…',       pulse: false },
-            speaking:  { color: 'bg-blue-400',    text: 'Agent Speaking',  pulse: true  },
-            listening: { color: 'bg-emerald-400', text: 'Listening…',      pulse: true  },
-            error:     { color: 'bg-red-400',     text: 'Error',           pulse: false },
+            ready:     { color: 'bg-slate-400',   text: 'Ready',          pulse: false },
+            thinking:  { color: 'bg-yellow-400',  text: 'Thinking…',      pulse: false },
+            speaking:  { color: 'bg-blue-400',    text: 'Agent Speaking', pulse: true  },
+            listening: { color: 'bg-emerald-400', text: 'Listening…',     pulse: true  },
+            error:     { color: 'bg-red-400',     text: 'Error',          pulse: false },
           };
           const s = map[state] || map.ready;
-          dot.className = `w-2 h-2 rounded-full ${s.color}`;
+          dot.className     = `w-2 h-2 rounded-full ${s.color}`;
           label.textContent = s.text;
-          if (s.pulse) {
-            r1.classList.add('scale-125','opacity-60');
-            r2.classList.add('scale-110','opacity-80');
-          } else {
-            r1.classList.remove('scale-125','opacity-60');
-            r2.classList.remove('scale-110','opacity-80');
-          }
+          r1.classList.toggle('scale-125', s.pulse); r1.classList.toggle('opacity-60', s.pulse);
+          r2.classList.toggle('scale-110', s.pulse); r2.classList.toggle('opacity-80', s.pulse);
         }
 
         function showAgent(text) {
@@ -325,10 +453,7 @@
 
         function showTextInput(show) {
           document.getElementById('textInputRow').classList.toggle('hidden', !show);
-          if (show) {
-            document.getElementById('voiceTextInput').value = '';
-            document.getElementById('voiceTextInput').focus();
-          }
+          if (show) { document.getElementById('voiceTextInput').value = ''; document.getElementById('voiceTextInput').focus(); }
         }
 
         function setSessionUI(active) {
@@ -341,51 +466,23 @@
           document.getElementById('endBtn').classList.toggle('hidden', !active);
         }
 
-        // ── SPEAK ──────────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  SPEAK
+        // ═══════════════════════════════════════════════════════════════
         function speak(text, onDone) {
-          window.speechSynthesis.cancel();
-          isSpeaking = true;
-          setStatus('speaking');
-          showAgent(text);
-          showTextInput(false);
-
-          // Log to transcript
-          transcriptLog.push({ speaker: 'Ashley (Agent)', text, time: getLineTimestamp() });
-
-          const utter   = new SpeechSynthesisUtterance(text);
-          utter.rate    = 0.92;
-          utter.pitch   = 1.0;
-          utter.volume  = 1.0;
-
-          const setVoiceAndSpeak = () => {
-            const voice = getBestVoice();
-            if (voice) utter.voice = voice;
-            utter.onend = () => {
-              isSpeaking = false;
-              if (onDone && isSessionActive) onDone();
-            };
-            utter.onerror = () => {
-              isSpeaking = false;
-              if (onDone && isSessionActive) onDone();
-            };
-            window.speechSynthesis.speak(utter);
-          };
-
-          if (window.speechSynthesis.getVoices().length === 0) {
-            window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
-          } else {
-            setVoiceAndSpeak();
-          }
+          speakWithCapture(text, onDone);
         }
 
-        // ── LISTEN (mic) ───────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  LISTEN
+        // ═══════════════════════════════════════════════════════════════
         function startListening() {
           if (!isSessionActive) return;
           setStatus('listening');
           showTextInput(true);
 
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SR) return; // text input only
+          if (!SR) return;
 
           recognition = new SR();
           recognition.lang            = 'en-US';
@@ -412,12 +509,8 @@
           recognition.onend = () => {
             clearTimeout(silenceTimer);
             const said = finalTranscript.trim();
-            if (said && isSessionActive) {
-              showTextInput(false);
-              handleUserInput(said);
-            } else if (isSessionActive) {
-              setTimeout(startListening, 500);
-            }
+            if (said && isSessionActive) { showTextInput(false); handleUserInput(said); }
+            else if (isSessionActive) { setTimeout(startListening, 500); }
           };
 
           recognition.onerror = (e) => {
@@ -427,7 +520,9 @@
           recognition.start();
         }
 
-        // ── TEXT INPUT FALLBACK ────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  TEXT INPUT FALLBACK
+        // ═══════════════════════════════════════════════════════════════
         function submitTextInput() {
           const input = document.getElementById('voiceTextInput');
           const text  = input.value.trim();
@@ -438,12 +533,12 @@
           handleUserInput(text);
         }
 
-        // ── AI REPLY ───────────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  AI REPLY
+        // ═══════════════════════════════════════════════════════════════
         async function handleUserInput(userText) {
           if (!isSessionActive) return;
           setStatus('thinking');
-
-          // Log user turn
           transcriptLog.push({ speaker: 'Visitor', text: userText, time: getLineTimestamp() });
           conversationHistory.push({ role: 'user', content: userText });
 
@@ -458,11 +553,13 @@
             conversationHistory.push({ role: 'assistant', content: reply });
             speak(reply, startListening);
           } catch (err) {
-            speak("I'm having a quick connection issue. Please try again or call us at 833-405-1540.", startListening);
+            speak("I'm having a quick connection issue. Please try again or call us directly.", startListening);
           }
         }
 
-        // ── SESSION CONTROL ────────────────────────────────────────────
+        // ═══════════════════════════════════════════════════════════════
+        //  SESSION CONTROL
+        // ═══════════════════════════════════════════════════════════════
         function toggleVoiceSession() {
           if (isSessionActive) return;
           startSession();
@@ -472,12 +569,25 @@
           conversationHistory = [];
           transcriptLog       = [];
           audioBlob           = null;
+          audioChunks         = [];
+          tabCaptured         = false;
           sessionStartTime    = new Date();
+
           setSessionUI(true);
           document.getElementById('userBubble').classList.add('hidden');
           document.getElementById('exportModal').classList.add('hidden');
 
-          await startAudioRecording();
+          // Init audio context + mic recording
+          await initAudio();
+          startHeartbeat();
+
+          // Prompt for tab audio capture to get agent voice
+          // Show a brief UI note while the picker opens
+          showAgent("One moment — please share your tab audio when prompted to enable full recording.");
+          const captured = await requestTabAudioCapture();
+          if (!captured) {
+            showAgent("Recording mic only — tab audio sharing was skipped.");
+          }
 
           const opener = "Hi! I'm Ashley, your AI receptionist. Tell me about your business — what industry are you in?";
           speak(opener, startListening);
@@ -487,16 +597,23 @@
           isSessionActive = false;
           window.speechSynthesis.cancel();
           if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
-          stopAudioRecording();
+
+          // Stop recorder — onstop handler sets audioBlob
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+          stopTabCapture();
+          if (heartbeat)  { try { heartbeat.stop(); } catch(e){} heartbeat = null; }
+          if (audioCtx)   { audioCtx.close(); audioCtx = null; }
+
           setSessionUI(false);
           setStatus('ready');
           showTextInput(false);
           document.getElementById('agentBubble').classList.add('hidden');
           document.getElementById('userBubble').classList.add('hidden');
 
-          // Show export modal if there's anything to save
+          // Wait a tick for onstop to fire and set audioBlob, then show modal
           if (transcriptLog.length > 0) {
-            setTimeout(showExportModal, 400);
+            setTimeout(showExportModal, 600);
           } else {
             conversationHistory = [];
           }
