@@ -368,8 +368,7 @@
             ...transcriptLog.map(e => `[${e.time}]  ${e.speaker}: ${e.text}`),
             '',
             `--- End of conversation (${transcriptLog.length} exchanges) ---`
-          ].join('
-');
+          ].join('\n');
           const blob = new Blob([lines], { type: 'text/plain' });
           const url  = URL.createObjectURL(blob);
           const a    = Object.assign(document.createElement('a'), { href: url, download: `thinkezly-conversation-${stamp}.txt` });
@@ -1000,7 +999,7 @@
       messageBox.scrollTop = messageBox.scrollHeight;
 
       try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch('/.netlify/functions/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text })
