@@ -131,19 +131,145 @@
       </div>
       <!-- ── /AI Voice Agent ── -->
 
+      <!-- ── Export Modal ── -->
+      <div id="exportModal" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl">
+        <div class="bg-[#0f1e3a] border border-white/20 rounded-2xl p-6 mx-4 w-full max-w-xs text-center shadow-2xl">
+          <div class="text-3xl mb-2">💾</div>
+          <p class="text-white font-black text-base mb-1">Save Conversation</p>
+          <p class="text-slate-400 text-xs mb-5">Download your transcript and audio recording.</p>
+          <div class="flex flex-col gap-3">
+            <button onclick="downloadTranscript()"
+              class="flex items-center justify-center gap-2 bg-[#1071E5] hover:bg-blue-500 text-white font-bold text-sm px-4 py-2.5 rounded-full transition">
+              📄 Download Transcript (.txt)
+            </button>
+            <button id="audioDownloadBtn" onclick="downloadAudio()"
+              class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm px-4 py-2.5 rounded-full transition">
+              🎙️ Download Audio (.webm)
+            </button>
+            <button onclick="dismissExport()"
+              class="text-slate-400 hover:text-white text-xs mt-1 transition">
+              No thanks, dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- ── /Export Modal ── -->
+
       <script>
         // ── STATE ──────────────────────────────────────────────────────
-        let isSessionActive = false;
-        let recognition     = null;
-        let isSpeaking      = false;
-        let conversationHistory = [];
+        let isSessionActive     = false;
+        let recognition         = null;
+        let isSpeaking          = false;
+        let conversationHistory = [];   // {role, content} for API
+        let transcriptLog       = [];   // {speaker, text, time} for export
+        let sessionStartTime    = null;
+
+        // ── AUDIO RECORDING ────────────────────────────────────────────
+        let mediaRecorder    = null;
+        let audioChunks      = [];
+        let audioBlob        = null;
+        let micStream        = null;
+
+        async function startAudioRecording() {
+          try {
+            micStream   = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(micStream);
+            audioChunks   = [];
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+              audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            };
+            mediaRecorder.start(500); // collect in 500ms chunks
+          } catch (e) {
+            console.warn('Audio recording unavailable:', e);
+          }
+        }
+
+        function stopAudioRecording() {
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+        }
+
+        // ── EST TIMESTAMP ──────────────────────────────────────────────
+        function getESTFilestamp() {
+          const now = new Date();
+          const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+          const pad = n => String(n).padStart(2, '0');
+          return `${est.getFullYear()}-${pad(est.getMonth()+1)}-${pad(est.getDate())}_${pad(est.getHours())}-${pad(est.getMinutes())}-${pad(est.getSeconds())}-EST`;
+        }
+
+        function getESTReadable() {
+          return new Date().toLocaleString('en-US', {
+            timeZone: 'America/New_York',
+            dateStyle: 'full',
+            timeStyle: 'medium'
+          }) + ' EST';
+        }
+
+        function getLineTimestamp() {
+          return new Date().toLocaleString('en-US', {
+            timeZone: 'America/New_York',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+          });
+        }
+
+        // ── EXPORT ─────────────────────────────────────────────────────
+        function downloadTranscript() {
+          const stamp = getESTFilestamp();
+          const lines = [
+            'ThinkEzly AI Agent — Conversation Transcript',
+            '=============================================',
+            `Date: ${getESTReadable()}`,
+            '',
+            ...transcriptLog.map(e => `[${e.time}]  ${e.speaker}: ${e.text}`),
+            '',
+            `--- End of conversation (${transcriptLog.length} exchanges) ---`
+          ].join('
+');
+
+          const blob = new Blob([lines], { type: 'text/plain' });
+          const url  = URL.createObjectURL(blob);
+          const a    = document.createElement('a');
+          a.href     = url;
+          a.download = `thinkezly-conversation-${stamp}.txt`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        function downloadAudio() {
+          if (!audioBlob) {
+            alert('No audio recording available for this session.');
+            return;
+          }
+          const stamp = getESTFilestamp();
+          const url   = URL.createObjectURL(audioBlob);
+          const a     = document.createElement('a');
+          a.href      = url;
+          a.download  = `thinkezly-conversation-${stamp}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        function showExportModal() {
+          // Disable audio button if no recording
+          document.getElementById('audioDownloadBtn').disabled = !audioBlob;
+          document.getElementById('audioDownloadBtn').style.opacity = audioBlob ? '1' : '0.4';
+          document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function dismissExport() {
+          document.getElementById('exportModal').classList.add('hidden');
+          // Clear after dismiss
+          transcriptLog = [];
+          audioBlob     = null;
+          audioChunks   = [];
+        }
 
         const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
 
         // ── VOICE SELECTION ────────────────────────────────────────────
         function getBestVoice() {
           const voices = window.speechSynthesis.getVoices();
-          // Priority list — most natural to least
           const priority = [
             v => /samantha/i.test(v.name),
             v => /karen/i.test(v.name),
@@ -223,8 +349,11 @@
           showAgent(text);
           showTextInput(false);
 
+          // Log to transcript
+          transcriptLog.push({ speaker: 'Ashley (Agent)', text, time: getLineTimestamp() });
+
           const utter   = new SpeechSynthesisUtterance(text);
-          utter.rate    = 0.92;   // slightly slower = more natural
+          utter.rate    = 0.92;
           utter.pitch   = 1.0;
           utter.volume  = 1.0;
 
@@ -256,14 +385,11 @@
           showTextInput(true);
 
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-          if (!SR) {
-            // No mic API — text input only
-            return;
-          }
+          if (!SR) return; // text input only
 
           recognition = new SR();
-          recognition.lang           = 'en-US';
-          recognition.interimResults = true;
+          recognition.lang            = 'en-US';
+          recognition.interimResults  = true;
           recognition.maxAlternatives = 1;
 
           let finalTranscript = '';
@@ -276,15 +402,10 @@
               if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
               else interim += e.results[i][0].transcript;
             }
-            // Show interim in user bubble
             showUser((finalTranscript || interim).trim());
-
-            // Reset silence timer on each result
             clearTimeout(silenceTimer);
             if (finalTranscript.trim()) {
-              silenceTimer = setTimeout(() => {
-                recognition.stop();
-              }, 1200); // 1.2s silence after final = done
+              silenceTimer = setTimeout(() => { recognition.stop(); }, 1200);
             }
           };
 
@@ -295,15 +416,12 @@
               showTextInput(false);
               handleUserInput(said);
             } else if (isSessionActive) {
-              // Nothing heard — re-listen
               setTimeout(startListening, 500);
             }
           };
 
           recognition.onerror = (e) => {
-            if (e.error === 'no-speech' && isSessionActive) {
-              setTimeout(startListening, 500);
-            }
+            if (e.error === 'no-speech' && isSessionActive) setTimeout(startListening, 500);
           };
 
           recognition.start();
@@ -320,24 +438,23 @@
           handleUserInput(text);
         }
 
-        // ── AI REPLY via Anthropic API ─────────────────────────────────
+        // ── AI REPLY ───────────────────────────────────────────────────
         async function handleUserInput(userText) {
           if (!isSessionActive) return;
           setStatus('thinking');
 
+          // Log user turn
+          transcriptLog.push({ speaker: 'Visitor', text: userText, time: getLineTimestamp() });
           conversationHistory.push({ role: 'user', content: userText });
 
           try {
             const res = await fetch('/.netlify/functions/chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                system: SYSTEM_PROMPT,
-                messages: conversationHistory
-              })
+              body: JSON.stringify({ system: SYSTEM_PROMPT, messages: conversationHistory })
             });
-            const data   = await res.json();
-            const reply  = data.content?.[0]?.text || "I'm sorry, I didn't catch that. Could you repeat?";
+            const data  = await res.json();
+            const reply = data.content?.[0]?.text || "I'm sorry, I didn't catch that. Could you repeat?";
             conversationHistory.push({ role: 'assistant', content: reply });
             speak(reply, startListening);
           } catch (err) {
@@ -347,14 +464,20 @@
 
         // ── SESSION CONTROL ────────────────────────────────────────────
         function toggleVoiceSession() {
-          if (isSessionActive) return; // button disabled during session
+          if (isSessionActive) return;
           startSession();
         }
 
-        function startSession() {
+        async function startSession() {
           conversationHistory = [];
+          transcriptLog       = [];
+          audioBlob           = null;
+          sessionStartTime    = new Date();
           setSessionUI(true);
           document.getElementById('userBubble').classList.add('hidden');
+          document.getElementById('exportModal').classList.add('hidden');
+
+          await startAudioRecording();
 
           const opener = "Hi! I'm Ashley, your AI receptionist. Tell me about your business — what industry are you in?";
           speak(opener, startListening);
@@ -364,12 +487,19 @@
           isSessionActive = false;
           window.speechSynthesis.cancel();
           if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+          stopAudioRecording();
           setSessionUI(false);
           setStatus('ready');
           showTextInput(false);
           document.getElementById('agentBubble').classList.add('hidden');
           document.getElementById('userBubble').classList.add('hidden');
-          conversationHistory = [];
+
+          // Show export modal if there's anything to save
+          if (transcriptLog.length > 0) {
+            setTimeout(showExportModal, 400);
+          } else {
+            conversationHistory = [];
+          }
         }
       </script>
     </div>
