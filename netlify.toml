@@ -1,0 +1,18 @@
+# FILE:    netlify.toml
+# VERSION: v11
+# UPDATED: 2026-06-08
+# CHANGES: v11: Points to index-v11.html. Added gemini-token function for Gemini Live API key proxy.
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from   = "/.netlify/functions/*"
+  to     = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from   = "/"
+  to     = "/index-v11.html"
+  status = 200
