@@ -450,8 +450,7 @@
             ''
           ].concat(transcriptLog.map(e => '[' + e.time + ']  ' + e.speaker + ': ' + e.text))
            .concat(['', '--- End of conversation (' + transcriptLog.length + ' exchanges) ---'])
-           .join('
-');
+           .join('\n');
           const url = URL.createObjectURL(new Blob([lines], { type: 'text/plain' }));
           Object.assign(document.createElement('a'), { href: url, download: 'thinkezly-conversation-' + stamp + '.txt' }).click();
           URL.revokeObjectURL(url);
@@ -1004,6 +1003,8 @@
     }
 
     // Chat Processing Pipeline Connecting with Netlify Function Backend
+    let chatHistory = [];
+
     async function sendMessage() {
       const input = document.getElementById('userInput');
       const text = input.value.trim();
@@ -1020,6 +1021,7 @@
       `;
       messageBox.appendChild(userDiv);
       input.value = '';
+      chatHistory.push({ role: 'user', content: text });
       messageBox.scrollTop = messageBox.scrollHeight;
 
       const typingDiv = document.createElement('div');
@@ -1038,18 +1040,23 @@
         const response = await fetch('/.netlify/functions/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({
+            system: 'You are Ashley, a friendly AI receptionist for ThinkEzly, a service providing 24/7 AI employees for businesses. Be warm, concise, and helpful. Encourage visitors to book a demo.',
+            messages: chatHistory.concat([{ role: 'user', content: text }])
+          })
         });
         const data = await response.json();
         
         document.getElementById('ashley-typing').remove();
+        const replyText = data.content?.[0]?.text || '';
+        if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
 
         const aiDiv = document.createElement('div');
         aiDiv.className = 'flex items-start space-x-2';
         aiDiv.innerHTML = `
           <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">👩‍💼</div>
           <div class="bg-white text-slate-700 p-3 rounded-xl rounded-tl-none shadow-sm max-w-[80%] font-medium">
-            ${data.reply}
+            ${data.content?.[0]?.text || 'Sorry, I had trouble responding. Please try again.'}
           </div>
         `;
         messageBox.appendChild(aiDiv);
