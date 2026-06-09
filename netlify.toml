@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v11
+# VERSION: v12
 # UPDATED: 2026-06-08
-# CHANGES: v11: Points to index-v11.html. Added gemini-token function for Gemini Live API key proxy.
+# CHANGES: v12: Points to index-v12.html. Updated Gemini model name to gemini-2.5-flash-native-audio-latest.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v11.html"
+  to     = "/index-v12.html"
   status = 200
