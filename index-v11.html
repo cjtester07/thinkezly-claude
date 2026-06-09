@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <!--
-  index-v11.html
-  - Fixed reconnect loop firing on page load before session starts
-  - Added isConnecting flag to prevent duplicate session launches
-  - endSession() now kills isSessionActive BEFORE closing WS to block spurious reconnects
-  - Token fetch errors now cleanly reset UI instead of looping
-  - Voice selector locked during active/connecting session
+  index-v11.html (debug build)
+  - Added console logging to diagnose reconnect loop issue
+  - Token fetch, WS open/close all log to DevTools console
 -->
 <html lang="en">
 <head>
@@ -488,19 +485,22 @@
           // ── Fetch API key via Netlify proxy ──────────────────────────
           let apiKey;
           try {
+            console.log('[ThinkEzly] Fetching Gemini token...');
             const res  = await fetch('/.netlify/functions/gemini-token');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            console.log('[ThinkEzly] Token response status:', res.status);
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' — gemini-token.js may not be deployed');
             const data = await res.json();
+            console.log('[ThinkEzly] Token received:', data.key ? 'YES (length ' + data.key.length + ')' : 'NO — key is empty');
             apiKey = data.key;
-            if (!apiKey) throw new Error('No key in response');
+            if (!apiKey) throw new Error('GEMINI_API_KEY not set in Netlify env vars');
           } catch(e) {
-            console.error('Token fetch failed:', e);
+            console.error('[ThinkEzly] Token fetch failed:', e);
             isSessionActive = false;
             isConnecting    = false;
             setStatus('error');
             setSessionUI(false);
             showTextInput(false);
-            appendBubble('agent', 'Could not connect: ' + e.message + '. Make sure GEMINI_API_KEY is set in Netlify env vars and gemini-token.js is deployed.');
+            appendBubble('agent', '⚠️ ' + e.message);
             return;
           }
 
@@ -509,6 +509,7 @@
           ws = new WebSocket(wsUrl);
 
           ws.onopen = async () => {
+            console.log('[ThinkEzly] WebSocket opened successfully');
             isConnecting = false;
             reconnectCount = 0;
 
@@ -598,10 +599,10 @@
           };
 
           ws.onclose = (evt) => {
+            console.warn('[ThinkEzly] WS closed — code:', evt.code, 'reason:', evt.reason, 'isSessionActive:', isSessionActive);
             isConnecting = false;
             // Only reconnect if session was intentionally active (not killed by endSession)
             if (!isSessionActive) return;
-            console.warn('WS closed unexpectedly — code:', evt.code, 'reason:', evt.reason);
             if (reconnectCount < MAX_RECONNECTS) {
               reconnectCount++;
               const delay = Math.min(1500 * reconnectCount, 6000);
