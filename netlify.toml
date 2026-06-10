@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v17
+# VERSION: v18
 # UPDATED: 2026-06-09
-# CHANGES: v17: Points to index-v17.html. Replaced clientContent with realtimeInput.text for Gemini 3.1 live turns.
+# CHANGES: v18: Points to index-v18.html. clientContent for text turns; added transcription config to setup.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v17.html"
+  to     = "/index-v18.html"
   status = 200
