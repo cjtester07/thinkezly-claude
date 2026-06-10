@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v12
-# UPDATED: 2026-06-08
-# CHANGES: v12: Points to index-v12.html. Updated Gemini model name to gemini-2.5-flash-native-audio-latest.
+# VERSION: v13
+# UPDATED: 2026-06-09
+# CHANGES: v13: Points to index-v13.html. Updated Gemini Live model to gemini-3.1-flash-live-preview.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v12.html"
+  to     = "/index-v13.html"
   status = 200
