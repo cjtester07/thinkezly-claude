@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v14
+# VERSION: v15
 # UPDATED: 2026-06-09
-# CHANGES: v14: Points to index-v14.html. Removed TEXT modality — gemini-3.1-flash-live-preview supports AUDIO only.
+# CHANGES: v15: Points to index-v15.html. Fixed deprecated realtimeInput.mediaChunks to realtimeInput.audio.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v14.html"
+  to     = "/index-v15.html"
   status = 200
