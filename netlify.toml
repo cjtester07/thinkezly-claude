@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v16
+# VERSION: v17
 # UPDATED: 2026-06-09
-# CHANGES: v16: Points to index-v16.html. Added initial greeting trigger; fixed onmessage for Gemini 3.1 multi-part events.
+# CHANGES: v17: Points to index-v17.html. Replaced clientContent with realtimeInput.text for Gemini 3.1 live turns.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v16.html"
+  to     = "/index-v17.html"
   status = 200
