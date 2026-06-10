@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v15
+# VERSION: v16
 # UPDATED: 2026-06-09
-# CHANGES: v15: Points to index-v15.html. Fixed deprecated realtimeInput.mediaChunks to realtimeInput.audio.
+# CHANGES: v16: Points to index-v16.html. Added initial greeting trigger; fixed onmessage for Gemini 3.1 multi-part events.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v15.html"
+  to     = "/index-v16.html"
   status = 200
