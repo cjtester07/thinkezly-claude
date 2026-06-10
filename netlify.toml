@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v19
+# VERSION: v20
 # UPDATED: 2026-06-09
-# CHANGES: v19: Points to index-v19.html. Removed real-time transcript bubbles from voice agent UI.
+# CHANGES: v20: Points to index-v20.html. Gemini 3.1 native audio + removed transcript UI + WS keepalive.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v19.html"
+  to     = "/index-v20.html"
   status = 200
