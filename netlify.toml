@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v13
+# VERSION: v14
 # UPDATED: 2026-06-09
-# CHANGES: v13: Points to index-v13.html. Updated Gemini Live model to gemini-3.1-flash-live-preview.
+# CHANGES: v14: Points to index-v14.html. Removed TEXT modality — gemini-3.1-flash-live-preview supports AUDIO only.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v13.html"
+  to     = "/index-v14.html"
   status = 200
