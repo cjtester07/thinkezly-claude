@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<!--
+  index-v21.html
+  - Fixed transcription field names: snake_case → camelCase
+    (input_audio_transcription → inputAudioTranscription, same for output)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThinkEzly - Never Miss A Call</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles for range sliders to look like the screenshots */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1071E5;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1071E5;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-800 bg-slate-50 min-h-screen">
+
+  <header class="bg-white border-b border-slate-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div class="flex items-center space-x-1 font-black text-2xl tracking-tight">
+        <span class="text-[#F17329]">Think</span>
+        <span class="text-[#1071E5] flex items-center">
+          Ezly<span class="inline-block text-xl mx-px">📌</span>
+        </span>
+      </div>
+
+      <nav class="hidden md:flex items-center space-x-8 font-medium text-slate-600">
+        <a href="#examples" class="hover:text-blue-600 transition">Examples</a>
+        <a href="#features" class="hover:text-blue-600 transition">Features</a>
+        <a href="#pricing" class="hover:text-blue-600 transition">Pricing</a>
+      </nav>
+
+      <a href="tel:8334051540" class="border-2 border-[#F17329] text-slate-800 px-5 py-2 rounded-full font-bold text-sm hover:bg-orange-50 transition flex flex-col items-center leading-tight">
+        <span class="text-xs text-slate-500 font-semibold flex items-center gap-1">
+          Click to speak to AI 📞
+        </span>
+        <span>(833) 405-1540</span>
+      </a>
+    </div>
+  </header>
+
+  <section class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-12 gap-12 items-center">
+    <div class="md:col-span-5 space-y-6">
+      <h1 class="text-4xl lg:text-5xl font-black tracking-tight leading-tight">
+        Never Miss A Call <br>or Lead Again with <br>
+        <span class="text-[#1071E5]">AI Employees</span>
+      </h1>
+      <p class="text-lg text-slate-600 leading-relaxed">
+        Turn your business into a 24/7 profit-generating machine with AI employees that qualify leads, schedule appointments, manage customer service and more!
+      </p>
+    </div>
+
+    <div class="md:col-span-7 relative bg-slate-900 rounded-xl overflow-hidden shadow-2xl flex flex-col justify-between h-[450px]">
+      
+      <div class="p-6 space-y-2 bg-gradient-to-b from-black/90 to-transparent z-10">
+        <div class="flex items-center space-x-3 text-white font-bold text-sm md:text-base">
+          <span class="bg-emerald-500 text-white p-0.5 rounded-full text-xs">✓</span>
+          <span>ANSWERS 100% OF YOUR INBOUND CALLS</span>
+        </div>
+        <div class="flex items-center space-x-3 text-white font-bold text-sm md:text-base">
+          <span class="bg-emerald-500 text-white p-0.5 rounded-full text-xs">✓</span>
+          <span>FILTERS OUT THE SPAM</span>
+        </div>
+        <div class="flex items-center space-x-3 text-white font-bold text-sm md:text-base">
+          <span class="bg-emerald-500 text-white p-0.5 rounded-full text-xs">✓</span>
+          <span>CONVERTS EVERYONE INTO LEAD</span>
+        </div>
+      </div>
+
+      <!-- ── AI Voice Agent ── -->
+      <div class="absolute inset-0 w-full h-full pt-14 flex flex-col items-center justify-start px-5 pb-3 overflow-hidden">
+
+        <!-- Avatar Ring -->
+        <div class="relative flex items-center justify-center mb-3 flex-shrink-0">
+          <div id="pulseRing1" class="absolute w-28 h-28 rounded-full border-2 border-blue-400/30 transition-all duration-700"></div>
+          <div id="pulseRing2" class="absolute w-20 h-20 rounded-full border-2 border-blue-400/40 transition-all duration-700"></div>
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-[#1071E5] to-[#1d82fc] flex items-center justify-center text-2xl shadow-lg shadow-blue-500/40 z-10">🤖</div>
+        </div>
+
+        <!-- Name + Status -->
+        <p class="text-white font-black text-base tracking-wide mb-1 flex-shrink-0">ThinkEzly AI Agent</p>
+        <div class="flex items-center gap-1.5 mb-2 flex-shrink-0">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="statusText" class="text-slate-400 text-xs font-semibold uppercase tracking-widest">Ready</span>
+        </div>
+
+        <!-- Voice selector (visible before session starts) -->
+        <div id="voiceSelector" class="flex items-center gap-2 mb-3 flex-shrink-0">
+          <span class="text-slate-400 text-xs">Voice:</span>
+          <div class="flex gap-1 flex-wrap justify-center">
+            <button onclick="selectVoice('Aoede',this)"  class="voice-btn active-voice text-xs px-2.5 py-1 rounded-full border border-blue-400 bg-blue-500/20 text-blue-200 font-bold transition">Aoede</button>
+            <button onclick="selectVoice('Charon',this)" class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Charon</button>
+            <button onclick="selectVoice('Fenrir',this)" class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Fenrir</button>
+            <button onclick="selectVoice('Kore',this)"   class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Kore</button>
+            <button onclick="selectVoice('Puck',this)"   class="voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200">Puck</button>
+          </div>
+        </div>
+
+        <!-- Text input (shown while listening) -->
+        <div id="textInputRow" class="hidden w-full max-w-sm flex items-center gap-2 mb-2 flex-shrink-0">
+          <input id="voiceTextInput" type="text" placeholder="Or type your reply…"
+            class="flex-1 bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs rounded-full px-3 py-1.5 focus:outline-none focus:border-blue-400"
+            onkeydown="if(event.key==='Enter') submitTextInput()" />
+          <button onclick="submitTextInput()"
+            class="bg-[#1071E5] hover:bg-blue-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">➔</button>
+        </div>
+
+        <!-- Start button -->
+        <button id="talkBtn" onclick="toggleVoiceSession()"
+          class="flex-shrink-0 flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none">
+          <span id="talkIcon">🎙️</span>
+          <span id="talkLabel">Talk to Our AI</span>
+        </button>
+
+        <!-- End call -->
+        <button id="endBtn" onclick="endSession()"
+          class="hidden flex-shrink-0 mt-2 bg-red-500/80 hover:bg-red-500 text-white text-xs font-bold px-5 py-1.5 rounded-full transition">
+          ✕ End Call
+        </button>
+
+      </div>
+      <!-- ── /AI Voice Agent ── -->
+
+      <!-- ── Export Modal ── -->
+      <div id="exportModal" class="hidden absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 rounded-2xl">
+        <div class="bg-[#0f1e3a] border border-white/20 rounded-2xl p-6 mx-4 w-full max-w-xs text-center shadow-2xl">
+          <div class="text-3xl mb-2">💾</div>
+          <p class="text-white font-black text-base mb-1">Save Conversation</p>
+          <p class="text-slate-400 text-xs mb-5">Download your transcript and audio recording.</p>
+          <div class="flex flex-col gap-3">
+            <button onclick="downloadTranscript()"
+              class="flex items-center justify-center gap-2 bg-[#1071E5] hover:bg-blue-500 text-white font-bold text-sm px-4 py-2.5 rounded-full transition">
+              📄 Download Transcript (.txt)
+            </button>
+            <button id="audioDownloadBtn" onclick="downloadAudio()"
+              class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm px-4 py-2.5 rounded-full transition">
+              🎙️ Download Audio (.webm)
+            </button>
+            <button onclick="dismissExport()"
+              class="text-slate-400 hover:text-white text-xs mt-1 transition">
+              No thanks, dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- ── /Export Modal ── -->
+
+      <script>
+        // ═══════════════════════════════════════════════════════════════
+        //  CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const GEMINI_MODEL    = 'gemini-3.1-flash-live-preview';
+        const GEMINI_IN_RATE  = 16000;
+        const GEMINI_OUT_RATE = 24000;
+        const MAX_RECONNECTS  = 3;
+        let   GEMINI_VOICE    = 'Aoede';
+
+        const SYSTEM_PROMPT = `You are Ashley, a warm and professional AI receptionist for ThinkEzly — a service that provides 24/7 AI employees for small and medium businesses. Keep responses concise (2-3 sentences max). Ask one question at a time. Your goal is to learn about the visitor's business, qualify their interest in AI call-handling, and invite them to book a free demo. Never mention you are a demo or simulation.`;
+
+        // ═══════════════════════════════════════════════════════════════
+        //  STATE
+        // ═══════════════════════════════════════════════════════════════
+        let isSessionActive  = false;  // true only after startSession() succeeds
+        let isConnecting     = false;  // true while WS handshake in progress
+        let ws               = null;
+        let micCtx           = null;
+        let micStream        = null;
+        let micProcessor     = null;
+        let playCtx          = null;
+        let nextPlayTime     = 0;
+        let transcriptLog    = [];
+        let agentTextBuffer  = '';
+        let currentAgentEl   = null;
+        let reconnectCount   = 0;
+        let reconnectTimer   = null;
+
+        // ── Keepalive ─────────────────────────────────────────────────
+        let keepaliveTimer   = null;
+
+        // ── Recording ─────────────────────────────────────────────────
+        let mediaRecorder    = null;
+        let audioChunks      = [];
+        let audioBlob        = null;
+        let recStartTime     = null;
+        let mixDest          = null;
+
+        // ═══════════════════════════════════════════════════════════════
+        //  VOICE SELECTOR
+        // ═══════════════════════════════════════════════════════════════
+        function selectVoice(name, btn) {
+          if (isSessionActive || isConnecting) return; // lock during session
+          GEMINI_VOICE = name;
+          document.querySelectorAll('.voice-btn').forEach(b => {
+            b.className = 'voice-btn text-xs px-2.5 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 font-bold transition hover:border-blue-400 hover:text-blue-200';
+          });
+          btn.className = 'voice-btn active-voice text-xs px-2.5 py-1 rounded-full border border-blue-400 bg-blue-500/20 text-blue-200 font-bold transition';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  EST TIMESTAMPS
+        // ═══════════════════════════════════════════════════════════════
+        function getESTFilestamp() {
+          const est = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+          const p   = n => String(n).padStart(2, '0');
+          return est.getFullYear() + '-' + p(est.getMonth()+1) + '-' + p(est.getDate()) +
+                 '_' + p(est.getHours()) + '-' + p(est.getMinutes()) + '-' + p(est.getSeconds()) + '-EST';
+        }
+        function getESTReadable() {
+          return new Date().toLocaleString('en-US', {
+            timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'medium'
+          }) + ' EST';
+        }
+        function getLineTimestamp() {
+          return new Date().toLocaleString('en-US', {
+            timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit'
+          });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  CONVERSATION LOG
+        // ═══════════════════════════════════════════════════════════════
+        // appendBubble: no-op (transcript UI removed; transcriptLog still populated for export)
+        function appendBubble(role, text) {
+          return { textContent: '' }; // return stub so callers assigning .textContent don't throw
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function setStatus(state) {
+          const dot   = document.getElementById('statusDot');
+          const label = document.getElementById('statusText');
+          const r1    = document.getElementById('pulseRing1');
+          const r2    = document.getElementById('pulseRing2');
+          const map   = {
+            ready:        { color: 'bg-slate-400',   text: 'Ready',           pulse: false },
+            connecting:   { color: 'bg-yellow-400',  text: 'Connecting...',   pulse: false },
+            reconnecting: { color: 'bg-yellow-400',  text: 'Reconnecting...', pulse: false },
+            listening:    { color: 'bg-emerald-400', text: 'Listening...',    pulse: true  },
+            speaking:     { color: 'bg-blue-400',    text: 'Agent Speaking',  pulse: true  },
+            thinking:     { color: 'bg-yellow-400',  text: 'Thinking...',     pulse: false },
+            error:        { color: 'bg-red-400',     text: 'Error',           pulse: false },
+          };
+          const s = map[state] || map.ready;
+          dot.className     = 'w-2 h-2 rounded-full ' + s.color;
+          label.textContent = s.text;
+          r1.classList.toggle('scale-125', s.pulse);
+          r1.classList.toggle('opacity-60', s.pulse);
+          r2.classList.toggle('scale-110', s.pulse);
+          r2.classList.toggle('opacity-80', s.pulse);
+        }
+
+        function showTextInput(show) {
+          document.getElementById('textInputRow').classList.toggle('hidden', !show);
+          if (show) {
+            document.getElementById('voiceTextInput').value = '';
+            setTimeout(() => document.getElementById('voiceTextInput').focus(), 100);
+          }
+        }
+
+        function setSessionUI(active) {
+          document.getElementById('talkIcon').textContent  = active ? '🔴' : '🎙️';
+          document.getElementById('talkLabel').textContent = active ? 'Live' : 'Talk to Our AI';
+          document.getElementById('talkBtn').className = active
+            ? 'flex-shrink-0 flex items-center gap-2 bg-slate-700 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg transition-all duration-200 focus:outline-none cursor-default'
+            : 'flex-shrink-0 flex items-center gap-2 bg-[#F17329] hover:bg-orange-500 active:scale-95 text-white font-black text-sm px-7 py-2.5 rounded-full shadow-lg shadow-orange-500/30 transition-all duration-200 focus:outline-none';
+          document.getElementById('endBtn').classList.toggle('hidden', !active);
+          document.getElementById('voiceSelector').classList.toggle('hidden', active);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  AUDIO RECORDING
+        // ═══════════════════════════════════════════════════════════════
+        function initRecording() {
+          playCtx      = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: GEMINI_OUT_RATE });
+          mixDest      = playCtx.createMediaStreamDestination();
+          nextPlayTime = playCtx.currentTime;
+
+          const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus' : 'audio/webm';
+          audioChunks   = [];
+          mediaRecorder = new MediaRecorder(mixDest.stream, { mimeType });
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = async () => {
+            const raw = new Blob(audioChunks, { type: mimeType });
+            audioBlob = await fixWebmDuration(raw, Date.now() - recStartTime);
+          };
+          recStartTime = Date.now();
+          mediaRecorder.start(200);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  MIC SETUP
+        // ═══════════════════════════════════════════════════════════════
+        async function initMic() {
+          micStream    = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          micCtx       = new AudioContext({ sampleRate: GEMINI_IN_RATE });
+          const src    = micCtx.createMediaStreamSource(micStream);
+          micProcessor = micCtx.createScriptProcessor(4096, 1, 1);
+
+          micProcessor.onaudioprocess = (e) => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const f32  = e.inputBuffer.getChannelData(0);
+            const i16  = new Int16Array(f32.length);
+            for (let i = 0; i < f32.length; i++) {
+              i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32[i] * 32767)));
+            }
+            const bytes = new Uint8Array(i16.buffer);
+            let binary  = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            ws.send(JSON.stringify({
+              realtimeInput: { audio: { data: btoa(binary), mimeType: 'audio/pcm;rate=' + GEMINI_IN_RATE } }
+            }));
+            // Feed mic into recorder (resampled to 24kHz)
+            if (playCtx && mixDest) {
+              const rs  = resampleF32(f32, GEMINI_IN_RATE, GEMINI_OUT_RATE);
+              const buf = playCtx.createBuffer(1, rs.length, GEMINI_OUT_RATE);
+              buf.copyToChannel(rs, 0);
+              const s = playCtx.createBufferSource();
+              s.buffer = buf;
+              s.connect(mixDest);
+              s.start();
+            }
+          };
+          src.connect(micProcessor);
+          micProcessor.connect(micCtx.destination);
+        }
+
+        function resampleF32(input, fromRate, toRate) {
+          const ratio  = toRate / fromRate;
+          const output = new Float32Array(Math.round(input.length * ratio));
+          for (let i = 0; i < output.length; i++) {
+            const pos = i / ratio;
+            const lo  = Math.floor(pos);
+            const hi  = Math.min(lo + 1, input.length - 1);
+            output[i] = input[lo] + (input[hi] - input[lo]) * (pos - lo);
+          }
+          return output;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  PCM PLAYBACK (gapless scheduled)
+        // ═══════════════════════════════════════════════════════════════
+        function enqueuePCM(b64data) {
+          if (!playCtx || !mixDest) return;
+          const raw = atob(b64data);
+          const i16 = new Int16Array(raw.length / 2);
+          for (let i = 0; i < i16.length; i++) {
+            i16[i] = (raw.charCodeAt(i * 2 + 1) << 8) | (raw.charCodeAt(i * 2) & 0xff);
+          }
+          const f32 = new Float32Array(i16.length);
+          for (let i = 0; i < i16.length; i++) f32[i] = i16[i] / 32768.0;
+
+          const buf = playCtx.createBuffer(1, f32.length, GEMINI_OUT_RATE);
+          buf.copyToChannel(f32, 0);
+          const src = playCtx.createBufferSource();
+          src.buffer = buf;
+          src.connect(playCtx.destination);
+          src.connect(mixDest);
+
+          const startAt = Math.max(nextPlayTime, playCtx.currentTime + 0.01);
+          src.start(startAt);
+          nextPlayTime = startAt + buf.duration;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  FIX WEBM DURATION
+        // ═══════════════════════════════════════════════════════════════
+        async function fixWebmDuration(blob, durationMs) {
+          try {
+            const buf  = await blob.arrayBuffer();
+            const data = new Uint8Array(buf);
+            for (let i = 0; i < data.length - 9; i++) {
+              if (data[i] === 0x44 && data[i+1] === 0x89 && data[i+2] === 0x88) {
+                new DataView(buf).setFloat64(i + 3, durationMs / 1000, false);
+                return new Blob([buf], { type: blob.type });
+              }
+            }
+            return blob;
+          } catch(e) { return blob; }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  TEXT INPUT
+        // ═══════════════════════════════════════════════════════════════
+        function submitTextInput() {
+          const input = document.getElementById('voiceTextInput');
+          const text  = input.value.trim();
+          if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+          input.value = '';
+          appendBubble('user', text);
+          showTextInput(false);
+          transcriptLog.push({ speaker: 'Visitor', text, time: getLineTimestamp() });
+          ws.send(JSON.stringify({
+            clientContent: {
+              turns: [{ role: 'user', parts: [{ text: text }] }],
+              turnComplete: true
+            }
+          }));
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  EXPORT
+        // ═══════════════════════════════════════════════════════════════
+        function downloadTranscript() {
+          const stamp = getESTFilestamp();
+          const lines = [
+            'ThinkEzly AI Agent — Conversation Transcript',
+            '=============================================',
+            'Date: ' + getESTReadable(),
+            ''
+          ].concat(transcriptLog.map(e => '[' + e.time + ']  ' + e.speaker + ': ' + e.text))
+           .concat(['', '--- End of conversation (' + transcriptLog.length + ' exchanges) ---'])
+           .join('\n');
+          const url = URL.createObjectURL(new Blob([lines], { type: 'text/plain' }));
+          Object.assign(document.createElement('a'), {
+            href: url, download: 'thinkezly-conversation-' + stamp + '.txt'
+          }).click();
+          URL.revokeObjectURL(url);
+        }
+
+        function downloadAudio() {
+          if (!audioBlob) { alert('No audio recording available.'); return; }
+          const stamp = getESTFilestamp();
+          const url   = URL.createObjectURL(audioBlob);
+          Object.assign(document.createElement('a'), {
+            href: url, download: 'thinkezly-conversation-' + stamp + '.webm'
+          }).click();
+          URL.revokeObjectURL(url);
+        }
+
+        function showExportModal() {
+          const btn     = document.getElementById('audioDownloadBtn');
+          btn.disabled  = !audioBlob;
+          btn.style.opacity = audioBlob ? '1' : '0.4';
+          document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function dismissExport() {
+          document.getElementById('exportModal').classList.add('hidden');
+          transcriptLog = []; audioBlob = null; audioChunks = [];
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  GEMINI WEBSOCKET
+        // ═══════════════════════════════════════════════════════════════
+        async function startGeminiSession(isReconnect) {
+          // Guard: never run if session was killed externally
+          if (!isSessionActive) return;
+
+          isConnecting = true;
+          setStatus(isReconnect ? 'reconnecting' : 'connecting');
+
+          // ── Fetch API key via Netlify proxy ──────────────────────────
+          let apiKey;
+          try {
+            console.log('[ThinkEzly] Fetching Gemini token...');
+            const res  = await fetch('/.netlify/functions/gemini-token');
+            console.log('[ThinkEzly] Token response status:', res.status);
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' — gemini-token.js may not be deployed');
+            const data = await res.json();
+            console.log('[ThinkEzly] Token received:', data.key ? 'YES (length ' + data.key.length + ')' : 'NO — key is empty');
+            apiKey = data.key;
+            if (!apiKey) throw new Error('GEMINI_API_KEY not set in Netlify env vars');
+          } catch(e) {
+            console.error('[ThinkEzly] Token fetch failed:', e);
+            isSessionActive = false;
+            isConnecting    = false;
+            setStatus('error');
+            setSessionUI(false);
+            showTextInput(false);
+            appendBubble('agent', '⚠️ ' + e.message);
+            return;
+          }
+
+          // ── Open WebSocket ───────────────────────────────────────────
+          const wsUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + apiKey;
+          ws = new WebSocket(wsUrl);
+
+          ws.onopen = async () => {
+            console.log('[ThinkEzly] WebSocket opened successfully');
+            isConnecting = false;
+            reconnectCount = 0;
+
+            ws.send(JSON.stringify({
+              setup: {
+                model: 'models/' + GEMINI_MODEL,
+                generation_config: {
+                  response_modalities: ['AUDIO'],
+                  speech_config: {
+                    voice_config: { prebuilt_voice_config: { voice_name: GEMINI_VOICE } }
+                  },
+                  inputAudioTranscription: {},
+                  outputAudioTranscription: {}
+                },
+                system_instruction: { parts: [{ text: SYSTEM_PROMPT }] }
+              }
+            }));
+
+            if (!isReconnect) await initMic();
+
+            // Keepalive: send a silent ping every 30s to prevent idle timeout
+            keepaliveTimer = setInterval(() => {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                // Send empty realtimeInput audio to keep connection alive
+                ws.send(JSON.stringify({ realtimeInput: { audio: { data: 'AAAAAAAA', mimeType: 'audio/pcm;rate=16000' } } }));
+              }
+            }, 30000);
+
+            // Send initial greeting via clientContent (confirmed working in Gemini 3.1)
+            setTimeout(() => {
+              if (!ws || ws.readyState !== WebSocket.OPEN) return;
+              if (!isReconnect) {
+                ws.send(JSON.stringify({
+                  clientContent: {
+                    turns: [{ role: 'user', parts: [{ text: 'Hello, please introduce yourself and ask me about my business.' }] }],
+                    turnComplete: true
+                  }
+                }));
+              } else if (transcriptLog.length > 0) {
+                const history = transcriptLog.map(e => ({
+                  role: e.speaker === 'Visitor' ? 'user' : 'model',
+                  parts: [{ text: e.text }]
+                }));
+                ws.send(JSON.stringify({
+                  clientContent: { turns: history, turnComplete: true }
+                }));
+              }
+            }, 300);
+
+            setStatus('listening');
+            showTextInput(true);
+          };
+
+          ws.onmessage = (evt) => {
+            let msg;
+            try { msg = JSON.parse(evt.data); } catch(e) { return; }
+
+            const sc = msg.serverContent;
+            if (!sc) return;
+
+            // Process ALL parts in one event (Gemini 3.1 sends mixed parts in single event)
+            const parts = sc.modelTurn?.parts || [];
+            for (const part of parts) {
+              // Audio chunk
+              if (part.inlineData?.mimeType?.includes('audio/pcm') || part.inlineData?.mimeType?.includes('audio/')) {
+                setStatus('speaking');
+                showTextInput(false);
+                enqueuePCM(part.inlineData.data);
+              }
+              // Inline text transcript
+              if (part.text) {
+                agentTextBuffer += part.text;
+                if (!currentAgentEl) {
+                  currentAgentEl = appendBubble('agent', agentTextBuffer);
+                } else {
+                  currentAgentEl.textContent = agentTextBuffer;
+                }
+              }
+            }
+
+            // Input transcription (what user said)
+            const inputText = sc.inputTranscription?.text?.trim();
+            if (inputText) {
+              appendBubble('user', inputText);
+              transcriptLog.push({ speaker: 'Visitor', text: inputText, time: getLineTimestamp() });
+            }
+
+            // Output transcription (what agent said)
+            const outputText = sc.outputTranscription?.text?.trim();
+            if (outputText) {
+              // Show in bubble if no inline text came through
+              if (!agentTextBuffer) {
+                if (!currentAgentEl) {
+                  currentAgentEl = appendBubble('agent', outputText);
+                } else {
+                  currentAgentEl.textContent = outputText;
+                }
+              }
+              transcriptLog.push({ speaker: 'Ashley (Agent)', text: outputText, time: getLineTimestamp() });
+            }
+
+            // Turn complete
+            if (sc.turnComplete) {
+              if (agentTextBuffer.trim() &&
+                  !transcriptLog.find(e => e.speaker === 'Ashley (Agent)' && e.text === agentTextBuffer.trim())) {
+                transcriptLog.push({ speaker: 'Ashley (Agent)', text: agentTextBuffer.trim(), time: getLineTimestamp() });
+              }
+              agentTextBuffer = '';
+              currentAgentEl  = null;
+              const waitMs = Math.max(0, (nextPlayTime - (playCtx ? playCtx.currentTime : 0)) * 1000) + 200;
+              setTimeout(() => {
+                if (isSessionActive) { setStatus('listening'); showTextInput(true); }
+              }, waitMs);
+            }
+          };
+
+          ws.onerror = (e) => {
+            console.error('Gemini WS error:', e);
+          };
+
+          ws.onclose = (evt) => {
+            console.warn('[ThinkEzly] WS closed — code:', evt.code, 'reason:', evt.reason, 'isSessionActive:', isSessionActive);
+            isConnecting = false;
+            // Only reconnect if session was intentionally active (not killed by endSession)
+            if (!isSessionActive) return;
+            if (reconnectCount < MAX_RECONNECTS) {
+              reconnectCount++;
+              const delay = Math.min(1500 * reconnectCount, 6000);
+              setStatus('reconnecting');
+              reconnectTimer = setTimeout(() => startGeminiSession(true), delay);
+            } else {
+              isSessionActive = false;
+              setStatus('error');
+              setSessionUI(false);
+              showTextInput(false);
+              appendBubble('agent', 'Connection lost after ' + MAX_RECONNECTS + ' attempts. Please try again.');
+            }
+          };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  SESSION CONTROL
+        // ═══════════════════════════════════════════════════════════════
+        function toggleVoiceSession() {
+          if (isSessionActive || isConnecting) return;
+          startSession();
+        }
+
+        function startSession() {
+          // Reset all state
+          transcriptLog   = [];
+          audioBlob       = null;
+          audioChunks     = [];
+          agentTextBuffer = '';
+          currentAgentEl  = null;
+          nextPlayTime    = 0;
+          reconnectCount  = 0;
+          isSessionActive = true;
+          isConnecting    = false;
+
+          document.getElementById('exportModal').classList.add('hidden');
+
+          setSessionUI(true);
+          initRecording();
+          startGeminiSession(false);
+        }
+
+        function endSession() {
+          // Kill session flags FIRST so onclose doesn't trigger reconnect
+          isSessionActive = false;
+          isConnecting    = false;
+          clearTimeout(reconnectTimer);
+          clearInterval(keepaliveTimer); keepaliveTimer = null;
+
+          if (ws) { try { ws.close(); } catch(e){} ws = null; }
+          if (micProcessor) { micProcessor.disconnect(); micProcessor = null; }
+          if (micStream)    { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+          if (micCtx)       { micCtx.close().catch(()=>{}); micCtx = null; }
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          setTimeout(() => { if (playCtx) { playCtx.close().catch(()=>{}); playCtx = null; } }, 800);
+
+          setSessionUI(false);
+          setStatus('ready');
+          showTextInput(false);
+
+          if (transcriptLog.length > 0) setTimeout(showExportModal, 1200);
+        }
+      </script>
+    </div>
+  </section>
+
+
+  <section id="examples" class="bg-slate-100/60 py-20 border-t border-b border-slate-200/50">
+    <div class="max-w-7xl mx-auto px-6 text-center">
+      <h2 class="text-3xl md:text-4xl font-black">
+        An <span class="text-[#1071E5]">AI Receptionist</span> For Any Business!
+      </h2>
+      <p class="text-slate-500 mt-2 font-medium">
+        <span class="underline cursor-pointer hover:text-slate-700">Listen to the examples below.</span> The possibilities are endless!
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-8 mt-12">
+        
+        <div class="bg-white rounded-xl overflow-hidden shadow-md flex flex-col text-left">
+          <div class="relative h-64 bg-black">
+            <video controls preload="metadata" class="w-full h-full object-cover">
+              <source src="Assets/Bakery.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="p-5">
+            <h3 class="text-[#1071E5] font-black text-2xl">Bakery</h3>
+            <p class="text-slate-400 text-sm mt-1">Local Business Example</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl overflow-hidden shadow-md flex flex-col text-left">
+          <div class="relative h-64 bg-black">
+            <video controls preload="metadata" class="w-full h-full object-cover">
+              <source src="Assets/HVAC.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="p-5">
+            <h3 class="text-[#1071E5] font-black text-2xl">HVAC</h3>
+            <p class="text-slate-400 text-sm mt-1">Home Services Example</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl overflow-hidden shadow-md flex flex-col text-left">
+          <div class="relative h-64 bg-black">
+            <video controls preload="metadata" class="w-full h-full object-cover">
+              <source src="Assets/Optical%20Shop.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="p-5">
+            <h3 class="text-[#1071E5] font-black text-2xl">Optical Shop</h3>
+            <p class="text-slate-400 text-sm mt-1">Professional Services Example</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="bg-[#1071E5] py-20 text-white">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <h2 class="text-3xl md:text-5xl font-bold tracking-tight">Calculate Your Missed Revenue</h2>
+      <p class="text-blue-100 mt-4 text-lg">
+        Every missed call could be a missed customer. <br>See how much money is slipping through the cracks.
+      </p>
+
+      <div class="mt-12 bg-white text-slate-800 rounded-2xl shadow-xl p-6 md:p-10 grid md:grid-cols-12 gap-8 text-left">
+        
+        <div class="md:col-span-6 space-y-8">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="font-bold text-slate-700 flex items-center gap-2">
+                📞 Missed Calls Per Week
+              </label>
+              <span id="callsBadge" class="bg-blue-50 text-[#1071E5] font-bold px-3 py-1 rounded text-sm">
+                20
+              </span>
+            </div>
+            <input 
+              id="missedCallsInput" 
+              type="range" min="0" max="300" value="20" 
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1071E5]"
+            >
+            <div class="flex justify-between text-xs text-slate-400 mt-1">
+              <span>0</span>
+              <span>300</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">
+              Businesses miss 28%–62%+ of inbound calls (National Average).
+            </p>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-2">
+              💲 Average Sale Value
+            </label>
+            <div class="relative rounded-md shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                $
+              </div>
+              <input
+                id="averageSaleInput"
+                type="number" value="300"
+                class="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="font-bold text-slate-700 flex items-center gap-1">
+                % Close Rate <span class="text-slate-300 text-xs cursor-help">ⓘ</span>
+              </label>
+              <span id="rateBadge" class="bg-blue-50 text-[#1071E5] font-bold px-3 py-1 rounded text-sm">
+                30%
+              </span>
+            </div>
+            <input 
+              id="closeRateInput" 
+              type="range" min="1" max="100" value="30" 
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1071E5]"
+            >
+            <div class="flex justify-between text-xs text-slate-400 mt-1">
+              <span>1%</span>
+              <span>100%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-6 bg-slate-50/80 rounded-xl p-6 flex flex-col justify-between border border-slate-100 text-center">
+          <div class="py-6">
+            <div class="text-red-400 text-2xl mb-2">📉</div>
+            <h3 class="text-lg font-bold text-slate-700">Revenue Going to Your Competition</h3>
+            <div id="yearlyMissedText" class="text-4xl md:text-6xl font-black text-[#1071E5] my-3">
+              $93,600
+            </div>
+            <p class="text-sm text-slate-400 font-medium">Per Year in Missed Calls</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+            <div class="bg-white p-3 rounded-lg border border-slate-100">
+              <p class="text-xs text-slate-400 font-semibold uppercase">Weekly Missed</p>
+              <p id="weeklyMissedText" class="text-xl font-bold text-slate-800">$1,800</p>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-100">
+              <p class="text-xs text-slate-400 font-semibold uppercase">Monthly Missed</p>
+              <p id="monthlyMissedText" class="text-xl font-bold text-slate-800">$7,794</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section id="features" class="py-20 max-w-7xl mx-auto px-6">
+    <div class="text-center space-y-3">
+      <h2 class="text-3xl md:text-4xl font-black flex items-center justify-center gap-2">
+        Why Use <span class="text-[#F17329]">Think</span><span class="text-[#1071E5]">Ezly</span>
+      </h2>
+      <p class="text-slate-600 font-bold max-w-2xl mx-auto text-sm md:text-base">
+        Speed to Lead Drives Sales, and Reviews Close the Loop— <br>
+        <span class="text-slate-400 font-medium text-sm">Faster Responses Convert Customers, and Their Feedback Fuels Future Growth</span>
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8 mt-16">
+      
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 relative pt-12">
+        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-white w-12 h-12 rounded-full border border-slate-100 shadow flex items-center justify-center text-xl">
+          📍
+        </div>
+        <h3 class="text-lg font-black text-center mb-6">
+          Missed Calls = <span class="text-[#1071E5]">Lost Revenue</span>
+        </h3>
+        <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <p>
+            <strong class="text-[#1071E5]">67% of customers hang up</strong> if they don't receive immediate assistance when calling.
+          </p>
+          <p>
+            <strong class="text-[#1071E5]">85% of missed calls never call back.</strong> That's business slipping through your fingers.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 relative pt-12">
+        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-white w-12 h-12 rounded-full border border-slate-100 shadow flex items-center justify-center text-xl">
+          📍
+        </div>
+        <h3 class="text-lg font-black text-center mb-6">
+          More Conversations = <span class="text-[#1071E5]">Sales</span>
+        </h3>
+        <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <p>
+            <strong class="text-[#1071E5]">92% of customer interactions</strong> happen over the phone. Can you afford to miss even one?
+          </p>
+          <p>
+            <strong class="text-[#1071E5]">60% of customers prefer</strong> speaking to a representative over leaving a voicemail.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 relative pt-12">
+        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-white w-12 h-12 rounded-full border border-slate-100 shadow flex items-center justify-center text-xl">
+          📍
+        </div>
+        <h3 class="text-lg font-black text-center mb-6">
+          Reviews = <span class="text-[#1071E5]">Trust + More Sales</span>
+        </h3>
+        <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
+          <p>
+            <strong class="text-[#1071E5]">93% of people read online reviews</strong> before making a purchase decision.
+          </p>
+          <p>
+            <strong class="text-[#1071E5]">89% of consumers read</strong> a business's response to reviews when evaluating if they trust a business, especially when handling negative feedback.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <section id="pricing" class="bg-white py-16 border-t border-slate-100">
+    <div class="max-w-4xl mx-auto px-6 text-center space-y-12">
+      
+      <div class="space-y-2">
+        <h3 class="text-3xl font-black">
+          Have a <span class="text-[#1071E5]">Question?</span>
+        </h3>
+        <p class="text-xl font-bold text-slate-800">
+          Click the Chat Bubble <span class="text-[#1071E5]">(bottom right)</span> <br>
+          and ask Ashley, our AI Chat employee 👇
+        </p>
+      </div>
+
+      <div class="bg-gradient-to-r from-[#1071E5] to-[#1d82fc] rounded-3xl p-8 md:p-12 text-white shadow-xl flex flex-col items-center justify-center space-y-6 relative overflow-hidden">
+        <p class="text-base md:text-lg font-medium uppercase tracking-wider text-blue-100">
+          Let ThinkEzly work for your business 24/7
+        </p>
+        <h4 class="text-3xl md:text-5xl font-black tracking-tight">
+          Plans Start at $397/month
+        </h4>
+        
+        <button class="bg-[#F17329] hover:bg-orange-600 text-white font-bold px-8 py-3.5 rounded-full shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2 text-base">
+          Let's do this ➔
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    
+    <div id="chatWindow" class="hidden w-[350px] h-[450px] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden mb-4 transition-all duration-300 transform scale-95 origin-bottom-right">
+      <div class="bg-[#1071E5] text-white p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold">👩‍💼</div>
+          <div>
+            <h4 class="font-black text-sm leading-none">Ashley</h4>
+            <span class="text-xs text-blue-100 font-medium">AI Agent • Online</span>
+          </div>
+        </div>
+        <button onclick="toggleChat()" class="text-white/80 hover:text-white text-xl font-bold focus:outline-none">✕</button>
+      </div>
+
+      <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-sm">
+        <div class="flex items-start space-x-2">
+          <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">👩‍💼</div>
+          <div class="bg-white text-slate-700 p-3 rounded-xl rounded-tl-none shadow-sm max-w-[80%] font-medium">
+            Hi! I'm Ashley, your AI assistant. How can I help you turn your missed calls into revenue today?
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 border-t border-slate-100 bg-white flex items-center space-x-2">
+        <input 
+          id="userInput" 
+          type="text" 
+          placeholder="Type a message..." 
+          class="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onkeydown="if(event.key === 'Enter') sendMessage()"
+        >
+        <button onclick="sendMessage()" class="bg-[#1071E5] hover:bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md">
+          ➔
+        </button>
+      </div>
+    </div>
+
+    <div id="chatBadge" class="bg-white px-3 py-1.5 rounded-lg shadow-md text-xs font-bold border border-slate-100 mb-2 animate-bounce cursor-pointer" onclick="toggleChat()">
+      Chat with Ashley! 👋
+    </div>
+    <button onclick="toggleChat()" class="w-14 h-14 bg-[#1071E5] text-white rounded-full flex items-center justify-center text-2xl shadow-xl hover:scale-105 transition focus:outline-none">
+      💬
+    </button>
+  </div>
+
+  <script>
+    // Revenue Calculator Engine Logic
+    const missedCallsInput = document.getElementById('missedCallsInput');
+    const averageSaleInput = document.getElementById('averageSaleInput');
+    const closeRateInput = document.getElementById('closeRateInput');
+
+    const callsBadge = document.getElementById('callsBadge');
+    const rateBadge = document.getElementById('rateBadge');
+
+    const weeklyMissedText = document.getElementById('weeklyMissedText');
+    const monthlyMissedText = document.getElementById('monthlyMissedText');
+    const yearlyMissedText = document.getElementById('yearlyMissedText');
+
+    function calculateRevenue() {
+      const missedCalls = Number(missedCallsInput.value);
+      const averageSale = Number(averageSaleInput.value);
+      const closeRate = Number(closeRateInput.value);
+
+      callsBadge.textContent = missedCalls;
+      rateBadge.textContent = closeRate + '%';
+
+      const weekly = missedCalls * averageSale * (closeRate / 100);
+      const yearly = weekly * 52;
+      const monthly = yearly / 12;
+
+      weeklyMissedText.textContent = '$' + Math.round(weekly).toLocaleString();
+      monthlyMissedText.textContent = '$' + Math.round(monthly).toLocaleString();
+      yearlyMissedText.textContent = '$' + Math.round(yearly).toLocaleString();
+    }
+
+    missedCallsInput.addEventListener('input', calculateRevenue);
+    averageSaleInput.addEventListener('input', calculateRevenue);
+    closeRateInput.addEventListener('input', calculateRevenue);
+    calculateRevenue();
+
+    // Chat Widget Open/Close UI Engine
+    function toggleChat() {
+      const chatWindow = document.getElementById('chatWindow');
+      const chatBadge = document.getElementById('chatBadge');
+      
+      if (chatWindow.classList.contains('hidden')) {
+        chatWindow.classList.remove('hidden');
+        setTimeout(() => { chatWindow.classList.remove('scale-95'); }, 10);
+        chatBadge.classList.add('hidden');
+      } else {
+        chatWindow.classList.add('scale-95');
+        setTimeout(() => { chatWindow.classList.add('hidden'); }, 150);
+        chatBadge.classList.remove('hidden');
+      }
+    }
+
+    // Chat Processing Pipeline Connecting with Netlify Function Backend
+    let chatHistory = [];
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const messageBox = document.getElementById('chatMessages');
+
+      const userDiv = document.createElement('div');
+      userDiv.className = 'flex items-start space-x-2 justify-end';
+      userDiv.innerHTML = `
+        <div class="bg-[#1071E5] text-white p-3 rounded-xl rounded-tr-none shadow-sm max-w-[80%] font-medium">
+          ${text}
+        </div>
+      `;
+      messageBox.appendChild(userDiv);
+      input.value = '';
+      chatHistory.push({ role: 'user', content: text });
+      messageBox.scrollTop = messageBox.scrollHeight;
+
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'flex items-start space-x-2';
+      typingDiv.id = 'ashley-typing';
+      typingDiv.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">👩‍💼</div>
+        <div class="bg-white text-slate-400 p-3 rounded-xl rounded-tl-none shadow-sm text-xs italic">
+          Ashley is typing...
+        </div>
+      `;
+      messageBox.appendChild(typingDiv);
+      messageBox.scrollTop = messageBox.scrollHeight;
+
+      try {
+        const response = await fetch('/.netlify/functions/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system: 'You are Ashley, a friendly AI receptionist for ThinkEzly, a service providing 24/7 AI employees for businesses. Be warm, concise, and helpful. Encourage visitors to book a demo.',
+            messages: chatHistory.concat([{ role: 'user', content: text }])
+          })
+        });
+        const data = await response.json();
+        
+        document.getElementById('ashley-typing').remove();
+        const replyText = data.content?.[0]?.text || '';
+        if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
+
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'flex items-start space-x-2';
+        aiDiv.innerHTML = `
+          <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">👩‍💼</div>
+          <div class="bg-white text-slate-700 p-3 rounded-xl rounded-tl-none shadow-sm max-w-[80%] font-medium">
+            ${data.content?.[0]?.text || 'Sorry, I had trouble responding. Please try again.'}
+          </div>
+        `;
+        messageBox.appendChild(aiDiv);
+      } catch (error) {
+        document.getElementById('ashley-typing').remove();
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'flex items-start space-x-2';
+        errorDiv.innerHTML = `
+          <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">👩‍💼</div>
+          <div class="bg-white text-slate-700 p-3 rounded-xl rounded-tl-none shadow-sm max-w-[80%] font-medium">
+            I'm experiencing a quick connection hitch, but feel free to call our main line at (833) 405-1540 to connect instantly!
+          </div>
+        `;
+        messageBox.appendChild(errorDiv);
+      }
+      
+      messageBox.scrollTop = messageBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>

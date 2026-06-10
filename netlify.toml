@@ -1,7 +1,7 @@
 # FILE:    netlify.toml
-# VERSION: v20
+# VERSION: v21
 # UPDATED: 2026-06-09
-# CHANGES: v20: Points to index-v20.html. Gemini 3.1 native audio + removed transcript UI + WS keepalive.
+# CHANGES: v21: Points to index-v21.html. Fixed transcription field names to camelCase.
 
 [build]
   publish = "."
@@ -14,5 +14,5 @@
 
 [[redirects]]
   from   = "/"
-  to     = "/index-v20.html"
+  to     = "/index-v21.html"
   status = 200
